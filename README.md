@@ -1,4 +1,7 @@
 # Haru Backend
+## Architecture Design Document
+
+* [ERD 설계안](https://app.notion.com/p/ERD-3836f80a3212800f961eea59e0095832)
 
 ## Backend Setup
 
@@ -264,6 +267,17 @@ CI에서 확인하는 항목:
 
 현재 CI는 배포가 아니라 PR 검증용이다.
 CD는 EC2, Dockerfile, Nginx, 서버 환경변수 구성이 완료된 뒤 추가한다.
+
+### 프로젝트 진행 계획
+```
+1단계: 로컬 개발 환경 세팅
+2단계: CI 설정
+3단계: Docker 실행 구조 만들기
+4단계: EC2 서버 준비
+5단계: Staging 배포 자동화
+6단계: Production 배포 자동화
+7단계: 롤백/모니터링 고도화
+```
 
 ---
 
