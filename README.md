@@ -1,7 +1,7 @@
 # Haru Backend
 ## Architecture Design Document
 
-* [ERD 설계안](https://app.notion.com/p/ERD-3836f80a3212800f961eea59e0095832)
+* [DB Schema](https://app.notion.com/p/DB-Schema-3856f80a32128075a171e495d0d70f47)
 
 ## Backend Setup
 
