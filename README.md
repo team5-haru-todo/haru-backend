@@ -33,6 +33,30 @@
 
 ---
 
+## Role Assignment
+
+백엔드는 도메인 기준으로 역할을 분리한다.
+
+| 담당자 | 담당 도메인                               | 주요 범위                              |
+| --- | ------------------------------------ | ---------------------------------- |
+| 김다은 | `auth`, `user`                       | 카카오/애플 로그인, JWT 발급, 사용자 정보, 사용자 설정 |
+| 조아영 | `task`                               | 할 일 생성/조회/수정/삭제, 반복 할 일, 표시 순서     |
+| 최희원 | `record`, `global`                   | 오늘의 한 개, 완료 처리, 스트릭, 공통 응답/예외/설정   |
+| 정윤서 | `calendar`, `report`, `notification` | 캘린더 조회, 주간 리포트, 기기 토큰, 푸시 알림       |
+
+역할 기준은 다음과 같다.
+
+* 각 담당자는 본인 도메인 안에서 `controller`, `service`, `repository`, `entity`, `dto`를 관리한다.
+* 다른 도메인의 테이블이나 로직을 직접 수정해야 하는 경우 먼저 담당자와 확인한다.
+* 공통 설정, 공통 응답, 공통 예외, Security 기본 설정은 `global`에서 관리한다.
+* 완료 처리는 `record` 도메인에서만 담당한다.
+* `task` 도메인은 할 일 원본만 관리하고 완료 기록을 생성하지 않는다.
+* `calendar` 도메인은 완료 기록을 조회만 하며, 기록을 새로 생성하지 않는다.
+* DB 변경이 필요한 경우 Flyway migration 파일을 추가하고, 기존에 공유된 migration은 수정하지 않는다.
+* API 명세가 변경될 경우 Swagger와 README 또는 별도 API 문서를 함께 갱신한다.
+
+---
+
 ## Package Structure
 
 패키지는 도메인 기준으로 분리한다.
@@ -70,12 +94,24 @@ dto
 
 전역 설정과 공통 기능을 담당한다.
 
-* Swagger 설정
-* JPA Auditing 설정
-* Security 기본 설정
-* 공통 응답 형식
-* 공통 예외 처리
-* 공통 유틸
+현재 구성된 주요 파일은 다음과 같다.
+
+| 파일 | 역할 |
+| --- | --- |
+| `SwaggerConfig.java` | Swagger/OpenAPI 문서 설정 |
+| `JpaAuditingConfig.java` | 생성일/수정일 자동 관리를 위한 JPA Auditing 설정 |
+| `SecurityConfig.java` | Spring Security 기본 설정 |
+| `ApiResponse.java` | 공통 성공 응답 형식 |
+| `ErrorResponse.java` | 공통 실패 응답 형식 |
+| `ErrorCode.java` | 공통 에러 코드 정의 |
+| `BusinessException.java` | 서비스 로직에서 사용하는 커스텀 예외 |
+| `GlobalExceptionHandler.java` | 전역 예외 처리 |
+
+현재 Security 설정은 초기 개발 편의를 위해 대부분의 요청을 허용한다.  
+JWT 인증/인가 적용은 `auth` 도메인의 로그인 구현 이후 진행한다.
+
+JWT 관련 클래스는 아직 작성하지 않는다.  
+로그인 정책과 사용자 엔티티가 확정된 뒤 `global.security`에 추가한다.
 
 ### auth
 
@@ -177,8 +213,6 @@ DEVICE_TOKENS
 * Controller에는 비즈니스 로직을 넣지 않는다.
 * 비즈니스 로직은 Service에 작성한다.
 * DB 접근은 Repository를 통해 처리한다.
-* 공통 응답은 `ApiResponse`를 사용한다.
-* 예외는 `BusinessException`과 `ErrorCode`를 사용한다.
 * 사용자 데이터는 반드시 현재 사용자의 소유인지 검증한다.
 * 할 일 삭제는 기본적으로 `deleted_at`을 사용하는 soft delete로 처리한다.
 * 하루 날짜 기준은 `Asia/Seoul`로 처리한다.
@@ -186,6 +220,14 @@ DEVICE_TOKENS
 * 미완료 기록을 별도 row로 저장하지 않는다.
 * `task` 도메인에 완료 처리 로직을 넣지 않는다.
 * `calendar` 도메인에서 완료 기록을 생성하지 않는다.
+  
+공통 응답과 예외 처리 기준은 다음을 따른다.
+* 성공 응답은 `ApiResponse.ok(...)`를 사용한다.
+* 실패 상황은 직접 `ResponseEntity`를 만들기보다 `BusinessException`을 발생시킨다.
+* 에러 종류는 `ErrorCode`에 정의한 값을 사용한다.
+* 새로운 예외 상황이 필요하면 임의 문자열을 쓰지 말고 `ErrorCode`를 먼저 추가한다.
+
+
 
 ---
 
