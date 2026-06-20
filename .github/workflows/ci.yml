@@ -1,0 +1,51 @@
+name: Backend CI
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: haru
+          POSTGRES_USER: haru
+          POSTGRES_PASSWORD: haru
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U haru -d haru"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      SPRING_PROFILES_ACTIVE: local
+      DB_URL: jdbc:postgresql://localhost:5432/haru
+      DB_USERNAME: haru
+      DB_PASSWORD: haru
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Test
+        run: ./gradlew test
+
+      - name: Build
+        run: ./gradlew build

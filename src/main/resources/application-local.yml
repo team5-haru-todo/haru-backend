@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/haru}
+    username: ${DB_USERNAME:haru}
+    password: ${DB_PASSWORD:haru}
+    driver-class-name: org.postgresql.Driver
+
+  flyway:
+    enabled: true

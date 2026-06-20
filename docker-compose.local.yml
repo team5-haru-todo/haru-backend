@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: haru-postgres
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: haru
+      POSTGRES_USER: haru
+      POSTGRES_PASSWORD: haru
+    volumes:
+      - haru-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  haru-postgres-data:
