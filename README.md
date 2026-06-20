@@ -2,6 +2,7 @@
 ## Architecture Design Document
 
 * [DB Schema](https://app.notion.com/p/DB-Schema-3856f80a32128075a171e495d0d70f47)
+* [API 명세서](https://app.notion.com/p/API-3856f80a321280d382fade4f8b116cbf#3856f80a321280408667d3eda0e80478)
 
 ## Backend Setup
 
