@@ -1,8 +1,9 @@
 # Haru Backend
 ## Architecture Design Document
 
-* [DB Schema](https://app.notion.com/p/DB-Schema-3856f80a32128075a171e495d0d70f47)
-* [API 명세서](https://app.notion.com/p/API-3856f80a321280d382fade4f8b116cbf#3856f80a321280408667d3eda0e80478)
+* [백엔드 노션](https://app.notion.com/p/37a2b87c6aec80ad9f56e1c5b8fb1c03)
+* [DB Schema](https://app.notion.com/p/DB-Schema-3862b87c6aec80719d76ed44e317e25e)
+* [API 명세서](https://app.notion.com/p/API-3862b87c6aec80f8851acb2d4e506ec2)
 
 ## Backend Setup
 
