@@ -262,9 +262,7 @@ V7__create_weekly_reports.sql
 V8__create_device_tokens.sql
 ```
 
-초기 로컬 개발 중에는 migration 파일을 수정하고 로컬 DB를 초기화할 수 있다.
-
-단, `develop`에 merge되었거나 팀원이 이미 pull 받은 migration은 수정하지 않는다.
+migration은 수정하거나 삭제하지 않는다.
 그 이후 DB 변경은 새 migration 파일로 추가한다.
 
 ---
