@@ -1,0 +1,14 @@
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+ALTER TABLE users ADD COLUMN new_id UUID DEFAULT gen_random_uuid();
+
+ALTER TABLE users DROP COLUMN kakao_id;
+ALTER TABLE users DROP COLUMN apple_id;
+
+ALTER TABLE users ADD COLUMN terms_version VARCHAR(20);
+ALTER TABLE users ADD COLUMN terms_agreed_at TIMESTAMPTZ;
+
+ALTER TABLE users ALTER COLUMN status SET DEFAULT 'GUEST';
+ALTER TABLE users DROP CONSTRAINT chk_users_status;
+ALTER TABLE users ADD CONSTRAINT chk_users_status
+    CHECK (status IN ('GUEST', 'ACTIVE', 'WITHDRAWN'));
