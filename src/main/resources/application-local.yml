@@ -4,6 +4,9 @@ spring:
     username: ${DB_USERNAME:haru}
     password: ${DB_PASSWORD:haru}
     driver-class-name: org.postgresql.Driver
-
   flyway:
     enabled: true
+
+jwt:
+  secret: ${JWT_SECRET:haru-local-dev-secret-key-change-this-in-production-32bytes-min}
+  access-token-validity-ms: ${JWT_ACCESS_TOKEN_VALIDITY_MS:604800000}

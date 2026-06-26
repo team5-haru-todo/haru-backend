@@ -1,0 +1,3 @@
+ALTER TABLE user_stats ALTER COLUMN user_id TYPE UUID USING NULL;
+ALTER TABLE user_stats ADD CONSTRAINT fk_user_stats_user
+FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
