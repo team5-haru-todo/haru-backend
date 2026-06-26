@@ -62,6 +62,15 @@ public class User {
         return user;
     }
 
+    public static User createFromSocial(String nickname, String termsVersion, LocalDateTime termsAgreedAt) {
+        User user = new User();
+        user.status = "ACTIVE";
+        user.nickname = nickname;
+        user.termsVersion = termsVersion;
+        user.termsAgreedAt = termsAgreedAt;
+        return user;
+    }
+
     public void activate(String termsVersion, LocalDateTime termsAgreedAt) {
         this.status = "ACTIVE";
         this.termsVersion = termsVersion;
