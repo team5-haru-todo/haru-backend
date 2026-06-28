@@ -7,10 +7,22 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+
+    public SecurityConfig(
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint
+    ) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -23,13 +35,18 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
+                                "/api/auth/**",
                                 "/actuator/health",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**"
                         ).permitAll()
-                        .anyRequest().permitAll()  // 개발 초기 설정 
-                );
+                        .anyRequest().authenticated()
+                )
+                .exceptionHandling(handler ->
+                        handler.authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                )
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
