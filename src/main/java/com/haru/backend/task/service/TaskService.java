@@ -1,7 +1,11 @@
 package com.haru.backend.task.service;
 
+import com.haru.backend.global.exception.BusinessException;
+import com.haru.backend.global.exception.ErrorCode;
 import com.haru.backend.task.dto.TaskCreateRequest;
+import com.haru.backend.task.dto.TaskOrderRequest;
 import com.haru.backend.task.dto.TaskResponse;
+import com.haru.backend.task.dto.TaskUpdateRequest;
 import com.haru.backend.task.entity.Task;
 import com.haru.backend.task.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,5 +34,38 @@ public class TaskService {
                 .stream()
                 .map(TaskResponse::from)
                 .toList();
+    }
+
+    @Transactional
+    public TaskResponse updateContent(UUID userId, Long taskId, TaskUpdateRequest request) {
+        Task task = getOwnedTask(userId, taskId);
+        task.updateContent(request.content());
+        return TaskResponse.from(task);
+    }
+
+    @Transactional
+    public void delete(UUID userId, Long taskId) {
+        Task task = getOwnedTask(userId, taskId);
+        task.delete();
+    }
+
+    @Transactional
+    public TaskResponse changeRecurring(UUID userId, Long taskId, boolean recurring) {
+        Task task = getOwnedTask(userId, taskId);
+        task.changeRecurring(recurring);
+        return TaskResponse.from(task);
+    }
+
+    @Transactional
+    public void updateOrder(UUID userId, List<TaskOrderRequest.OrderItem> orders) {
+        for (TaskOrderRequest.OrderItem item : orders) {
+            Task task = getOwnedTask(userId, item.taskId());
+            task.changeDisplayOrder(item.displayOrder());
+        }
+    }
+
+    private Task getOwnedTask(UUID userId, Long taskId) {
+        return taskRepository.findByIdAndUserIdAndDeletedAtIsNull(taskId, userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.TASK_NOT_FOUND));
     }
 }
