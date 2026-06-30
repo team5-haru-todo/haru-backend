@@ -7,12 +7,15 @@ import com.haru.backend.task.dto.TaskOrderRequest;
 import com.haru.backend.task.dto.TaskResponse;
 import com.haru.backend.task.dto.TaskUpdateRequest;
 import com.haru.backend.task.entity.Task;
+import com.haru.backend.task.entity.TaskType;
 import com.haru.backend.task.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -30,8 +33,20 @@ public class TaskService {
     }
 
     public List<TaskResponse> getTasks(UUID userId) {
-        return taskRepository.findAllByUserIdAndDeletedAtIsNullOrderByDisplayOrderAsc(userId)
-                .stream()
+        List<Task> tasks = taskRepository.findAllByUserIdAndDeletedAtIsNullOrderByDisplayOrderAsc(userId);
+
+        List<Long> generalTaskIds = tasks.stream()
+                .filter(task -> task.getTaskType() == TaskType.GENERAL)
+                .map(Task::getId)
+                .toList();
+
+        Set<Long> completedTaskIds = generalTaskIds.isEmpty()
+                ? Set.of()
+                : new HashSet<>(taskRepository.findCompletedTaskIds(generalTaskIds));
+
+        return tasks.stream()
+                .filter(task -> task.getTaskType() == TaskType.RECURRING
+                        || !completedTaskIds.contains(task.getId()))
                 .map(TaskResponse::from)
                 .toList();
     }
