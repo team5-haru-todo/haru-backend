@@ -65,12 +65,12 @@ public class TaskController {
 
     @Operation(summary = "할 일 삭제", description = "할 일을 soft delete 한다. 본인 소유만 가능.")
     @DeleteMapping("/{taskId}")
-    public ApiResponse<Void> delete(
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(
             @LoginUser UUID userId,
             @PathVariable Long taskId
     ) {
         taskService.delete(userId, taskId);
-        return ApiResponse.ok("할 일이 삭제되었습니다.", null);
     }
 
     @Operation(summary = "반복 설정 변경", description = "recurring 값에 따라 taskType 을 RECURRING/GENERAL 로 변경한다.")
