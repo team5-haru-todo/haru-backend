@@ -40,10 +40,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * 컨트롤러 슬라이스 테스트. 보안 인프라(SecurityConfig, JwtAuthenticationFilter)는 제외하고
- * 필터를 끈 뒤 @LoginUser 용 인증만 수동 주입하여, 컨트롤러 동작(상태코드/검증/응답)만 검증한다.
- */
+
 @WebMvcTest(controllers = TaskController.class,
         excludeFilters = @ComponentScan.Filter(
                 type = FilterType.ASSIGNABLE_TYPE,
