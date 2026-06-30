@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+
 @Entity
 @Table(name = "user_stats")
 @Getter
@@ -50,5 +51,21 @@ public class UserStats {
         stats.maxStreak = 0;
         stats.totalSuccessDays = 0;
         return stats;
+    }
+
+    public void applyFirstCompletion(LocalDate today) {
+        if (today.equals(lastSuccessDate)) {
+            return;
+        }
+        if (lastSuccessDate == null || lastSuccessDate.isBefore(today.minusDays(1))) {
+            currentStreak = 1;
+        } else {
+            currentStreak = currentStreak + 1;
+        }
+        if (currentStreak > maxStreak) {
+            maxStreak = currentStreak;
+        }
+        totalSuccessDays = totalSuccessDays + 1;
+        lastSuccessDate = today;
     }
 }

@@ -1,6 +1,6 @@
 package com.haru.backend.record.dto;
 
-import com.haru.backend.record.entity.UserStats;
+import com.haru.backend.user.entity.UserStats;
 
 import java.time.LocalDate;
 

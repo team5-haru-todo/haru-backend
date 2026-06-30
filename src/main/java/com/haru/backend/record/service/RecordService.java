@@ -6,10 +6,10 @@ import com.haru.backend.record.dto.*;
 import com.haru.backend.record.entity.CompletionType;
 import com.haru.backend.record.entity.DailyRecord;
 import com.haru.backend.record.entity.TaskCompletion;
-import com.haru.backend.record.entity.UserStats;
 import com.haru.backend.record.repository.DailyRecordRepository;
 import com.haru.backend.record.repository.TaskCompletionRepository;
-import com.haru.backend.record.repository.UserStatsRepository;
+import com.haru.backend.user.entity.UserStats;
+import com.haru.backend.user.repository.UserStatsRepository;
 import com.haru.backend.task.entity.Task;
 import com.haru.backend.task.entity.TaskType;
 import com.haru.backend.task.repository.TaskRepository;
@@ -149,8 +149,8 @@ public class RecordService {
         );
         record.recordFirstCompletion(now);
 
-        UserStats stats = userStatsRepository.findByUserId(userId)
-                .orElseGet(() -> userStatsRepository.save(UserStats.create(userId)));
+        UserStats stats = userStatsRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATS_NOT_FOUND));
         stats.applyFirstCompletion(today);
 
         return new FirstCompleteResponse(
@@ -193,7 +193,7 @@ public class RecordService {
     // ── GET /api/streak ───────────────────────────────────────────────────────
 
     public StreakResponse getStreak(UUID userId) {
-        return userStatsRepository.findByUserId(userId)
+        return userStatsRepository.findById(userId)
                 .map(StreakResponse::from)
                 .orElse(StreakResponse.empty());
     }

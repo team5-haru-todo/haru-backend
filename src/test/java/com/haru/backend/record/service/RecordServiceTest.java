@@ -6,10 +6,11 @@ import com.haru.backend.record.dto.*;
 import com.haru.backend.record.entity.CompletionType;
 import com.haru.backend.record.entity.DailyRecord;
 import com.haru.backend.record.entity.TaskCompletion;
-import com.haru.backend.record.entity.UserStats;
 import com.haru.backend.record.repository.DailyRecordRepository;
 import com.haru.backend.record.repository.TaskCompletionRepository;
-import com.haru.backend.record.repository.UserStatsRepository;
+import com.haru.backend.user.entity.User;
+import com.haru.backend.user.entity.UserStats;
+import com.haru.backend.user.repository.UserStatsRepository;
 import com.haru.backend.task.entity.Task;
 import com.haru.backend.task.entity.TaskType;
 import com.haru.backend.task.repository.TaskRepository;
@@ -47,6 +48,14 @@ class RecordServiceTest {
     RecordService recordService;
 
     private final UUID userId = UUID.randomUUID();
+
+    private UserStats createTestStats() {
+        User user = User.createGuest();
+        ReflectionTestUtils.setField(user, "id", userId);
+        UserStats stats = UserStats.createDefault(user);
+        ReflectionTestUtils.setField(stats, "userId", userId);
+        return stats;
+    }
 
     // ── getToday ──────────────────────────────────────────────────────────────
 
@@ -332,13 +341,36 @@ class RecordServiceTest {
         }
 
         @Test
+        @DisplayName("user_stats가 없으면 USER_STATS_NOT_FOUND를 던진다")
+        void userStatsNotFound() {
+            DailyRecord record = DailyRecord.create(userId, LocalDate.now());
+            record.assignTask(1L, java.time.Instant.now());
+            Task task = Task.create(userId, "운동하기", TaskType.GENERAL);
+
+            given(dailyRecordRepository.findWithLockByUserIdAndRecordDate(eq(userId), any(LocalDate.class)))
+                    .willReturn(Optional.of(record));
+            given(taskRepository.findByIdAndUserIdAndDeletedAtIsNull(1L, userId))
+                    .willReturn(Optional.of(task));
+            given(taskCompletionRepository.existsByDailyRecordIdAndTaskId(record.getId(), task.getId()))
+                    .willReturn(false);
+            given(taskCompletionRepository.save(any(TaskCompletion.class)))
+                    .willAnswer(inv -> inv.getArgument(0));
+            given(userStatsRepository.findById(userId)).willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> recordService.completeFirst(userId))
+                    .isInstanceOf(BusinessException.class)
+                    .extracting(e -> ((BusinessException) e).getErrorCode())
+                    .isEqualTo(ErrorCode.USER_STATS_NOT_FOUND);
+        }
+
+        @Test
         @DisplayName("정상 첫 완료 시 completion 저장, fireEarned=true, streak 반환")
         void success() {
             DailyRecord record = DailyRecord.create(userId, LocalDate.now());
             record.assignTask(1L, java.time.Instant.now());
             Task task = Task.create(userId, "운동하기", TaskType.GENERAL);
             TaskCompletion completion = TaskCompletion.create(record, task, CompletionType.FIRST, java.time.Instant.now());
-            UserStats stats = UserStats.create(userId);
+            UserStats stats = createTestStats();
 
             given(dailyRecordRepository.findWithLockByUserIdAndRecordDate(eq(userId), any(LocalDate.class)))
                     .willReturn(Optional.of(record));
@@ -347,7 +379,7 @@ class RecordServiceTest {
             given(taskCompletionRepository.existsByDailyRecordIdAndTaskId(record.getId(), task.getId()))
                     .willReturn(false);
             given(taskCompletionRepository.save(any(TaskCompletion.class))).willReturn(completion);
-            given(userStatsRepository.findByUserId(userId)).willReturn(Optional.of(stats));
+            given(userStatsRepository.findById(userId)).willReturn(Optional.of(stats));
 
             FirstCompleteResponse result = recordService.completeFirst(userId);
 
@@ -377,7 +409,7 @@ class RecordServiceTest {
             given(taskCompletionRepository.existsByDailyRecordIdAndTaskId(any(), any()))
                     .willReturn(false);
             given(taskCompletionRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
-            given(userStatsRepository.findByUserId(userId)).willReturn(Optional.of(stats));
+            given(userStatsRepository.findById(userId)).willReturn(Optional.of(stats));
         }
 
         @Test
@@ -385,7 +417,7 @@ class RecordServiceTest {
         void firstEver() {
             DailyRecord record = prepareRecord();
             Task task = Task.create(userId, "운동하기", TaskType.GENERAL);
-            UserStats stats = UserStats.create(userId);
+            UserStats stats = createTestStats();
             setupMocks(record, task, stats);
 
             FirstCompleteResponse result = recordService.completeFirst(userId);
@@ -399,7 +431,7 @@ class RecordServiceTest {
         void continuesFromYesterday() {
             DailyRecord record = prepareRecord();
             Task task = Task.create(userId, "운동하기", TaskType.GENERAL);
-            UserStats stats = UserStats.create(userId);
+            UserStats stats = createTestStats();
             stats.applyFirstCompletion(LocalDate.now().minusDays(1));
 
             setupMocks(record, task, stats);
@@ -414,7 +446,7 @@ class RecordServiceTest {
         void resetsAfterGap() {
             DailyRecord record = prepareRecord();
             Task task = Task.create(userId, "운동하기", TaskType.GENERAL);
-            UserStats stats = UserStats.create(userId);
+            UserStats stats = createTestStats();
             stats.applyFirstCompletion(LocalDate.now().minusDays(3));
 
             setupMocks(record, task, stats);
@@ -427,7 +459,7 @@ class RecordServiceTest {
         @Test
         @DisplayName("last_success_date가 오늘이면 streak을 다시 증가시키지 않는다")
         void sameDayIdempotent() {
-            UserStats stats = UserStats.create(userId);
+            UserStats stats = createTestStats();
             stats.applyFirstCompletion(LocalDate.now()); // already today
 
             int streakBefore = stats.getCurrentStreak();
@@ -442,7 +474,7 @@ class RecordServiceTest {
         @Test
         @DisplayName("max_streak은 current_streak의 최댓값을 추적한다")
         void maxStreak() {
-            UserStats stats = UserStats.create(userId);
+            UserStats stats = createTestStats();
             stats.applyFirstCompletion(LocalDate.now().minusDays(4));
             stats.applyFirstCompletion(LocalDate.now().minusDays(3));
             stats.applyFirstCompletion(LocalDate.now().minusDays(2));
@@ -540,7 +572,7 @@ class RecordServiceTest {
         @Test
         @DisplayName("user_stats가 없으면 0으로 응답한다")
         void noStats() {
-            given(userStatsRepository.findByUserId(userId)).willReturn(Optional.empty());
+            given(userStatsRepository.findById(userId)).willReturn(Optional.empty());
 
             StreakResponse result = recordService.getStreak(userId);
 
@@ -553,11 +585,11 @@ class RecordServiceTest {
         @Test
         @DisplayName("user_stats가 있으면 그 값을 반환한다")
         void withStats() {
-            UserStats stats = UserStats.create(userId);
+            UserStats stats = createTestStats();
             stats.applyFirstCompletion(LocalDate.now().minusDays(1));
             stats.applyFirstCompletion(LocalDate.now());
 
-            given(userStatsRepository.findByUserId(userId)).willReturn(Optional.of(stats));
+            given(userStatsRepository.findById(userId)).willReturn(Optional.of(stats));
 
             StreakResponse result = recordService.getStreak(userId);
 

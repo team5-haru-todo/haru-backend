@@ -16,6 +16,7 @@ public enum ErrorCode {
 
     // User
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_001", "사용자를 찾을 수 없습니다."),
+    USER_STATS_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "USER_002", "사용자 통계 정보가 초기화되지 않았습니다."),
 
     // Task
     TASK_NOT_FOUND(HttpStatus.NOT_FOUND, "TASK_001", "할 일을 찾을 수 없습니다."),
