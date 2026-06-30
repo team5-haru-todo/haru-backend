@@ -7,8 +7,12 @@ import com.haru.backend.auth.dto.LoginResponse;
 import com.haru.backend.global.security.JwtProvider;
 import com.haru.backend.user.entity.SocialAccount;
 import com.haru.backend.user.entity.User;
+import com.haru.backend.user.entity.UserSettings;
+import com.haru.backend.user.entity.UserStats;
 import com.haru.backend.user.repository.SocialAccountRepository;
 import com.haru.backend.user.repository.UserRepository;
+import com.haru.backend.user.repository.UserSettingsRepository;
+import com.haru.backend.user.repository.UserStatsRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,11 +27,15 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final SocialAccountRepository socialAccountRepository;
+    private final UserSettingsRepository userSettingsRepository;
+    private final UserStatsRepository userStatsRepository;
     private final KakaoAuthClient kakaoAuthClient;
     private final JwtProvider jwtProvider;
 
     public LoginResponse loginAsGuest() {
         User guest = userRepository.save(User.createGuest());
+        createDefaultSettingsAndStats(guest);
+
         String accessToken = jwtProvider.createAccessToken(guest.getId());
         return LoginResponse.of(accessToken, guest, Collections.emptyList());
     }
@@ -43,6 +51,7 @@ public class AuthService {
                             User.createFromSocial(kakaoUser.nickname(), request.termsVersion(), request.agreedAt())
                     );
                     socialAccountRepository.save(new SocialAccount(newUser, "KAKAO", providerUserId));
+                    createDefaultSettingsAndStats(newUser);
                     return newUser;
                 });
 
@@ -52,5 +61,10 @@ public class AuthService {
 
         String accessToken = jwtProvider.createAccessToken(user.getId());
         return LoginResponse.of(accessToken, user, connectedProviders);
+    }
+
+    private void createDefaultSettingsAndStats(User user) {
+        userSettingsRepository.save(UserSettings.createDefault(user));
+        userStatsRepository.save(UserStats.createDefault(user));
     }
 }
