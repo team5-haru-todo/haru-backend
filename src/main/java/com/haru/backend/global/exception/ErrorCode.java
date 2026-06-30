@@ -16,6 +16,7 @@ public enum ErrorCode {
 
     // User
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_001", "사용자를 찾을 수 없습니다."),
+    USER_STATS_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "USER_002", "사용자 통계 정보가 초기화되지 않았습니다."),
 
     // Task
     TASK_NOT_FOUND(HttpStatus.NOT_FOUND, "TASK_001", "할 일을 찾을 수 없습니다."),
@@ -24,6 +25,9 @@ public enum ErrorCode {
     // Record
     DAILY_RECORD_NOT_FOUND(HttpStatus.NOT_FOUND, "RECORD_001", "날짜별 기록을 찾을 수 없습니다."),
     ALREADY_COMPLETED_TODAY(HttpStatus.CONFLICT, "RECORD_002", "오늘의 첫 완료가 이미 처리되었습니다."),
+    TODAY_TASK_NOT_SELECTED(HttpStatus.BAD_REQUEST, "RECORD_003", "오늘의 한 개가 설정되어 있지 않습니다."),
+    ADDITIONAL_COMPLETION_BEFORE_FIRST(HttpStatus.CONFLICT, "RECORD_004", "첫 완료 전에는 추가 완료를 할 수 없습니다."),
+    TASK_ALREADY_COMPLETED_TODAY(HttpStatus.CONFLICT, "RECORD_005", "오늘 이미 완료한 할 일입니다."),
 
     // Report
     WEEKLY_REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT_001", "주간 리포트를 찾을 수 없습니다."),
