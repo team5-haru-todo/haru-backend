@@ -30,6 +30,7 @@ jobs:
       DB_URL: jdbc:postgresql://localhost:5432/haru
       DB_USERNAME: haru
       DB_PASSWORD: haru
+      FIREBASE_ENABLED: "false"
 
     steps:
       - name: Checkout
