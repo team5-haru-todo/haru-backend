@@ -81,4 +81,9 @@ public class User {
         this.termsVersion = termsVersion;
         this.termsAgreedAt = termsAgreedAt;
     }
+
+    public void withdraw() {
+        this.status = "WITHDRAWN";
+        this.withdrawnAt = LocalDateTime.now();
+    }
 }
