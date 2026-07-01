@@ -5,12 +5,15 @@ import com.haru.backend.global.security.LoginUser;
 import com.haru.backend.user.dto.UserResponse;
 import com.haru.backend.user.dto.UserSettingsRequest;
 import com.haru.backend.user.dto.UserSettingsResponse;
+import com.haru.backend.user.dto.WithdrawRequest;
 import com.haru.backend.user.service.UserService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
@@ -37,5 +40,14 @@ public class UserController {
     ) {
         UserSettingsResponse response = userService.updateMySettings(userId, request);
         return ApiResponse.ok("설정이 수정되었습니다.", response);
+    }
+
+    @PostMapping("/me/withdraw")
+    public ApiResponse<Void> withdraw(
+            @LoginUser UUID userId,
+            @RequestBody WithdrawRequest request
+    ) {
+        userService.withdraw(userId, request);
+        return ApiResponse.ok("탈퇴가 완료되었습니다.", null);
     }
 }
