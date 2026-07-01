@@ -16,3 +16,7 @@ springdoc:
     enabled: true
   api-docs:
     enabled: true
+
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
