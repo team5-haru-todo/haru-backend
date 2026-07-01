@@ -11,6 +11,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class SwaggerConfig {
 
+    private static final String BEARER_AUTH = "bearerAuth";
+
     @Bean
     public OpenAPI haruOpenAPI() {
         return new OpenAPI()
