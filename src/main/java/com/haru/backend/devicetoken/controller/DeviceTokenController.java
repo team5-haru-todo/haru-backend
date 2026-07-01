@@ -4,6 +4,7 @@ import com.haru.backend.devicetoken.dto.DeviceTokenRequest;
 import com.haru.backend.devicetoken.service.DeviceTokenService;
 import com.haru.backend.global.response.ApiResponse;
 import com.haru.backend.global.security.LoginUser;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,9 +23,10 @@ public class DeviceTokenController {
     @PostMapping("/token")
     public ApiResponse<Void> saveToken(
             @LoginUser UUID userId,
-            @RequestBody DeviceTokenRequest request
+            @Valid @RequestBody DeviceTokenRequest request
     ) {
+        // 로그인한 사용자와 현재 기기의 FCM 토큰을 연결한다.
         deviceTokenService.saveToken(userId, request);
-            return ApiResponse.ok();
-        }
+        return ApiResponse.ok();
     }
+}
