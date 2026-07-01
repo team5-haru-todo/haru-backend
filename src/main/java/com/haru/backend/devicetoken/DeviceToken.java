@@ -16,11 +16,12 @@ public class DeviceToken {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    @Column(name="token",nullable=false,unique=true,length=500)
     private String token;
     // enum타입을 문자열로 저장해라 라는 의미이다 .
     //enum은 String으로 저장했다고해서 타입이 스트링이 아니다. enum 타입이다.
     @Enumerated(EnumType.STRING)
+    @Column(name="platform",nullable=false,length=20)
     private Platform platform;
     //여러 사용자 중 비어있을 수 없다.
     @ManyToOne(fetch = FetchType.LAZY)
@@ -28,13 +29,21 @@ public class DeviceToken {
     @JoinColumn(name="user_id",nullable = false)
     private User user;
 
+    @Column(name="is_active",nullable=false)
+    private boolean active;
     //create() 파라미터로 받는가?
     public static DeviceToken create(String token, User user, Platform platform) {
         DeviceToken deviceToken = new DeviceToken(); //protected 생성자. 같은 클래스 안이라 호출 가능
         deviceToken.token = token;
         deviceToken.user = user;
         deviceToken.platform = platform;
+        deviceToken.active = true;
         return deviceToken;
+    }
+    public void reactivate(User user,Platform platform) {
+        this.user = user;
+        this.platform = platform;
+        this.active = true;
     }
 
 

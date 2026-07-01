@@ -1,7 +1,12 @@
 package com.haru.backend.devicetoken.dto;
 
 import com.haru.backend.devicetoken.Platform;
-// 필드 생성, 둘 다 받는 생성자 생성, token,platform() 접근자 생성
-public record DeviceTokenRequest(String token, Platform platform) {
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
+public record DeviceTokenRequest(
+        @NotBlank @Size(max = 500) String token,
+        @NotNull Platform platform
+) {
 }
