@@ -8,12 +8,6 @@ on:
         description: Docker image tag to publish
         required: true
         default: deploy-test
-
-  # 배포 준비 브랜치에 push되면 테스트용 이미지를 자동 발행한다.
-  push:
-    branches:
-      - feature/backend-deploy-setup
-
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
@@ -40,15 +34,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 수동 실행이면 입력한 태그를, 브랜치 push면 deploy-test 태그를 사용한다.
+      # 수동 실행 시 입력한 태그를 이미지 태그로 사용한다.
       - name: Resolve image tag
         id: tag
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "value=${{ inputs.image_tag }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "value=deploy-test" >> "$GITHUB_OUTPUT"
-          fi
+        run: echo "value=${{ inputs.image_tag }}" >> "$GITHUB_OUTPUT"
 
       # Dockerfile로 이미지를 빌드하고 GHCR에 태그 2개를 함께 올린다.
       - name: Build and push image
