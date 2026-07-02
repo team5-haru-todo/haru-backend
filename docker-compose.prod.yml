@@ -1,7 +1,7 @@
 services:
   app:
-    # GHCR에 올라간 이미지를 받아 실행한다. IMAGE_TAG가 없으면 배포 테스트 태그를 사용한다.
-    image: ghcr.io/team5-haru-todo/haru-backend:${IMAGE_TAG:-deploy-test}
+    # ECR에 올라간 이미지를 받아 실행한다. IMAGE_TAG가 없으면 배포 테스트 태그를 사용한다.
+    image: ${ECR_REGISTRY}/${ECR_REPOSITORY:-haru-backend}:${IMAGE_TAG:-deploy-test}
     container_name: haru-backend
 
     # 운영 환경변수는 EC2 서버에만 두고 Git에는 올리지 않는다.
