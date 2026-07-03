@@ -5,7 +5,11 @@ import com.haru.backend.auth.client.KakaoAuthClient;
 import com.haru.backend.auth.client.KakaoUserInfoResponse;
 import com.haru.backend.auth.dto.AppleLoginRequest;
 import com.haru.backend.auth.dto.KakaoLoginRequest;
+import com.haru.backend.auth.dto.LinkAppleRequest;
+import com.haru.backend.auth.dto.LinkKakaoRequest;
 import com.haru.backend.auth.dto.LoginResponse;
+import com.haru.backend.global.exception.BusinessException;
+import com.haru.backend.global.exception.ErrorCode;
 import com.haru.backend.global.security.JwtProvider;
 import com.haru.backend.user.entity.SocialAccount;
 import com.haru.backend.user.entity.User;
@@ -21,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -86,6 +91,60 @@ public class AuthService {
                 .map(SocialAccount::getProvider)
                 .toList();
 
+        String accessToken = jwtProvider.createAccessToken(user.getId());
+        return LoginResponse.of(accessToken, user, connectedProviders);
+    }
+
+    // 게스트(또는 이미 로그인된 유저)의 계정에 카카오 계정을 연동한다.
+    // 새 유저를 만들지 않고, 기존 유저에 SocialAccount만 추가하므로 기존 기록(할일/스트릭 등)이 그대로 유지된다.
+    public LoginResponse linkKakao(UUID userId, LinkKakaoRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        KakaoUserInfoResponse kakaoUser = kakaoAuthClient.getUserInfo(request.accessToken());
+        String providerUserId = String.valueOf(kakaoUser.id());
+
+        linkSocialAccount(user, "KAKAO", providerUserId);
+
+        return buildLoginResponseAfterLink(user);
+    }
+
+    // 게스트(또는 이미 로그인된 유저)의 계정에 Apple 계정을 연동한다.
+    public LoginResponse linkApple(UUID userId, LinkAppleRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        String providerUserId = appleTokenVerifier.verifyAndGetSubject(request.identityToken());
+
+        linkSocialAccount(user, "APPLE", providerUserId);
+
+        return buildLoginResponseAfterLink(user);
+    }
+
+    // 이미 다른 유저에게 연동된 소셜 계정이거나, 이미 이 유저에게 같은 provider가 연동되어 있으면 막는다.
+    private void linkSocialAccount(User user, String provider, String providerUserId) {
+        boolean linkedToAnotherUser = socialAccountRepository
+                .findByProviderAndProviderUserId(provider, providerUserId)
+                .map(SocialAccount::getUser)
+                .filter(existingUser -> !existingUser.getId().equals(user.getId()))
+                .isPresent();
+        if (linkedToAnotherUser) {
+            throw new BusinessException(ErrorCode.SOCIAL_ACCOUNT_ALREADY_LINKED);
+        }
+
+        boolean alreadyLinkedToSelf = socialAccountRepository.findAllByUser(user).stream()
+                .anyMatch(socialAccount -> socialAccount.getProvider().equals(provider));
+        if (alreadyLinkedToSelf) {
+            throw new BusinessException(ErrorCode.SOCIAL_ACCOUNT_ALREADY_LINKED);
+        }
+
+        socialAccountRepository.save(new SocialAccount(user, provider, providerUserId));
+    }
+
+    private LoginResponse buildLoginResponseAfterLink(User user) {
+        List<String> connectedProviders = socialAccountRepository.findAllByUser(user).stream()
+                .map(SocialAccount::getProvider)
+                .toList();
         String accessToken = jwtProvider.createAccessToken(user.getId());
         return LoginResponse.of(accessToken, user, connectedProviders);
     }
