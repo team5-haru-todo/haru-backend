@@ -1,7 +1,9 @@
 package com.haru.backend.auth.service;
 
+import com.haru.backend.auth.client.AppleTokenVerifier;
 import com.haru.backend.auth.client.KakaoAuthClient;
 import com.haru.backend.auth.client.KakaoUserInfoResponse;
+import com.haru.backend.auth.dto.AppleLoginRequest;
 import com.haru.backend.auth.dto.KakaoLoginRequest;
 import com.haru.backend.auth.dto.LoginResponse;
 import com.haru.backend.global.security.JwtProvider;
@@ -30,6 +32,7 @@ public class AuthService {
     private final UserSettingsRepository userSettingsRepository;
     private final UserStatsRepository userStatsRepository;
     private final KakaoAuthClient kakaoAuthClient;
+    private final AppleTokenVerifier appleTokenVerifier;
     private final JwtProvider jwtProvider;
 
     public LoginResponse loginAsGuest() {
@@ -51,6 +54,30 @@ public class AuthService {
                             User.createFromSocial(kakaoUser.nickname(), request.termsVersion(), request.agreedAt())
                     );
                     socialAccountRepository.save(new SocialAccount(newUser, "KAKAO", providerUserId));
+                    createDefaultSettingsAndStats(newUser);
+                    return newUser;
+                });
+
+        List<String> connectedProviders = socialAccountRepository.findAllByUser(user).stream()
+                .map(SocialAccount::getProvider)
+                .toList();
+
+        String accessToken = jwtProvider.createAccessToken(user.getId());
+        return LoginResponse.of(accessToken, user, connectedProviders);
+    }
+
+    public LoginResponse loginWithApple(AppleLoginRequest request) {
+        String providerUserId = appleTokenVerifier.verifyAndGetSubject(request.identityToken());
+
+        // Apple은 첫 로그인 이후 닉네임/이메일을 다시 안 내려주는 경우가 많아,
+        // 카카오와 달리 신규 유저 닉네임은 기본값으로 채워둔다.
+        User user = socialAccountRepository.findByProviderAndProviderUserId("APPLE", providerUserId)
+                .map(SocialAccount::getUser)
+                .orElseGet(() -> {
+                    User newUser = userRepository.save(
+                            User.createFromSocial("Apple 사용자", request.termsVersion(), request.agreedAt())
+                    );
+                    socialAccountRepository.save(new SocialAccount(newUser, "APPLE", providerUserId));
                     createDefaultSettingsAndStats(newUser);
                     return newUser;
                 });
