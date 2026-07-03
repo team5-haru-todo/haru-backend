@@ -9,6 +9,7 @@ import com.haru.backend.task.dto.TaskResponse;
 import com.haru.backend.task.dto.TaskUpdateRequest;
 import com.haru.backend.task.service.TaskService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Tag(name = "Task", description = "할 일 원본 관리 API")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/tasks")
 @RequiredArgsConstructor
@@ -45,7 +47,7 @@ public class TaskController {
         return ApiResponse.ok("할 일이 생성되었습니다.", response);
     }
 
-    @Operation(summary = "할 일 목록 조회", description = "삭제되지 않은 할 일을 표시 순서대로 조회한다.")
+    @Operation(summary = "할 일 목록 조회", description = "삭제되지 않은 할 일을 표시 순서대로 조회한다. 응답에는 상대 시간 표시용 createdAt 이 포함된다.")
     @GetMapping
     public ApiResponse<List<TaskResponse>> getTasks(@LoginUser UUID userId) {
         List<TaskResponse> responses = taskService.getTasks(userId);
@@ -65,12 +67,12 @@ public class TaskController {
 
     @Operation(summary = "할 일 삭제", description = "할 일을 soft delete 한다. 본인 소유만 가능.")
     @DeleteMapping("/{taskId}")
-    public ApiResponse<Void> delete(
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(
             @LoginUser UUID userId,
             @PathVariable Long taskId
     ) {
         taskService.delete(userId, taskId);
-        return ApiResponse.ok("할 일이 삭제되었습니다.", null);
     }
 
     @Operation(summary = "반복 설정 변경", description = "recurring 값에 따라 taskType 을 RECURRING/GENERAL 로 변경한다.")
