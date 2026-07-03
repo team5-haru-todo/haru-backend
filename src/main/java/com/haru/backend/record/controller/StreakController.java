@@ -3,6 +3,7 @@ package com.haru.backend.record.controller;
 import com.haru.backend.global.response.ApiResponse;
 import com.haru.backend.global.security.LoginUser;
 import com.haru.backend.record.dto.StreakResponse;
+import com.haru.backend.record.dto.WeeklyStreakResponse;
 import com.haru.backend.record.service.RecordService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -27,5 +28,11 @@ public class StreakController {
     @GetMapping("/streak")
     public ApiResponse<StreakResponse> getStreak(@LoginUser UUID userId) {
         return ApiResponse.ok(recordService.getStreak(userId));
+    }
+
+    @Operation(summary = "주간 완료 여부 조회", description = "이번 주(월~일, Asia/Seoul) 날짜별 완료 여부와 현재 스트릭을 반환한다.")
+    @GetMapping("/streak/week")
+    public ApiResponse<WeeklyStreakResponse> getWeeklyStreak(@LoginUser UUID userId) {
+        return ApiResponse.ok(recordService.getWeeklyStreak(userId));
     }
 }

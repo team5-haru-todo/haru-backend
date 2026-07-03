@@ -17,13 +17,17 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.temporal.TemporalAdjusters;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -196,6 +200,30 @@ public class RecordService {
         return userStatsRepository.findById(userId)
                 .map(StreakResponse::from)
                 .orElse(StreakResponse.empty());
+    }
+
+    // ── GET /api/streak/week ──────────────────────────────────────────────────
+
+    public WeeklyStreakResponse getWeeklyStreak(UUID userId) {
+        LocalDate today = today();
+        LocalDate weekStart = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        LocalDate weekEnd = weekStart.plusDays(6);
+
+        Map<LocalDate, Boolean> fireEarnedByDate = dailyRecordRepository
+                .findByUserIdAndRecordDateBetween(userId, weekStart, weekEnd)
+                .stream()
+                .collect(Collectors.toMap(DailyRecord::getRecordDate, DailyRecord::isFireEarned));
+
+        List<DayCompletionResponse> days = weekStart.datesUntil(weekEnd.plusDays(1))
+                .map(date -> DayCompletionResponse.of(date, fireEarnedByDate.getOrDefault(date, false)))
+                .toList();
+
+        int todayDayIndex = today.getDayOfWeek().getValue() - 1;
+        int currentStreak = userStatsRepository.findById(userId)
+                .map(UserStats::getCurrentStreak)
+                .orElse(0);
+
+        return new WeeklyStreakResponse(weekStart, todayDayIndex, currentStreak, days);
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────

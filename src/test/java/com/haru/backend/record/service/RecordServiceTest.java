@@ -563,6 +563,80 @@ class RecordServiceTest {
         }
     }
 
+    // ── getWeeklyStreak ───────────────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("getWeeklyStreak")
+    class GetWeeklyStreak {
+
+        @Test
+        @DisplayName("이번 주 월~일 중 fire_earned=true인 날짜만 completed=true로 반환한다")
+        void returnsCompletedDaysFromFireEarned() {
+            LocalDate today = LocalDate.now(java.time.ZoneId.of("Asia/Seoul"));
+            LocalDate weekStart = today.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
+
+            DailyRecord mondayRecord = DailyRecord.create(userId, weekStart);
+            mondayRecord.recordFirstCompletion(java.time.Instant.now());
+
+            given(dailyRecordRepository.findByUserIdAndRecordDateBetween(userId, weekStart, weekStart.plusDays(6)))
+                    .willReturn(List.of(mondayRecord));
+            given(userStatsRepository.findById(userId)).willReturn(Optional.empty());
+
+            WeeklyStreakResponse result = recordService.getWeeklyStreak(userId);
+
+            assertThat(result.weekStartDate()).isEqualTo(weekStart);
+            assertThat(result.days()).hasSize(7);
+            assertThat(result.days().get(0).date()).isEqualTo(weekStart);
+            assertThat(result.days().get(0).completed()).isTrue();
+            assertThat(result.days().stream().filter(DayCompletionResponse::completed).count()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("daily_records row가 없는 날짜는 completed=false로 반환한다")
+        void noRecordMeansNotCompleted() {
+            LocalDate today = LocalDate.now(java.time.ZoneId.of("Asia/Seoul"));
+            LocalDate weekStart = today.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
+
+            given(dailyRecordRepository.findByUserIdAndRecordDateBetween(userId, weekStart, weekStart.plusDays(6)))
+                    .willReturn(List.of());
+            given(userStatsRepository.findById(userId)).willReturn(Optional.empty());
+
+            WeeklyStreakResponse result = recordService.getWeeklyStreak(userId);
+
+            assertThat(result.days()).allMatch(day -> !day.completed());
+            assertThat(result.currentStreak()).isZero();
+        }
+
+        @Test
+        @DisplayName("todayDayIndex는 월=0 기준으로 계산된다")
+        void todayDayIndexMatchesMondayZeroConvention() {
+            LocalDate today = LocalDate.now(java.time.ZoneId.of("Asia/Seoul"));
+
+            given(dailyRecordRepository.findByUserIdAndRecordDateBetween(any(), any(), any()))
+                    .willReturn(List.of());
+            given(userStatsRepository.findById(userId)).willReturn(Optional.empty());
+
+            WeeklyStreakResponse result = recordService.getWeeklyStreak(userId);
+
+            assertThat(result.todayDayIndex()).isEqualTo(today.getDayOfWeek().getValue() - 1);
+        }
+
+        @Test
+        @DisplayName("user_stats의 currentStreak를 그대로 포함한다")
+        void includesCurrentStreakFromUserStats() {
+            UserStats stats = createTestStats();
+            stats.applyFirstCompletion(LocalDate.now(java.time.ZoneId.of("Asia/Seoul")).minusDays(1));
+
+            given(dailyRecordRepository.findByUserIdAndRecordDateBetween(any(), any(), any()))
+                    .willReturn(List.of());
+            given(userStatsRepository.findById(userId)).willReturn(Optional.of(stats));
+
+            WeeklyStreakResponse result = recordService.getWeeklyStreak(userId);
+
+            assertThat(result.currentStreak()).isEqualTo(stats.getCurrentStreak());
+        }
+    }
+
     // ── getStreak ─────────────────────────────────────────────────────────────
 
     @Nested
