@@ -1,5 +1,6 @@
 package com.haru.backend.auth.controller;
 
+import com.haru.backend.auth.dto.AppleLoginRequest;
 import com.haru.backend.auth.dto.KakaoLoginRequest;
 import com.haru.backend.auth.dto.LoginResponse;
 import com.haru.backend.auth.service.AuthService;
@@ -30,6 +31,12 @@ public class AuthController {
     @PostMapping("/kakao")
     public ApiResponse<LoginResponse> loginWithKakao(@RequestBody KakaoLoginRequest request) {
         LoginResponse response = authService.loginWithKakao(request);
+        return ApiResponse.ok("로그인에 성공했습니다.", response);
+    }
+
+    @PostMapping("/apple")
+    public ApiResponse<LoginResponse> loginWithApple(@RequestBody AppleLoginRequest request) {
+        LoginResponse response = authService.loginWithApple(request);
         return ApiResponse.ok("로그인에 성공했습니다.", response);
     }
 
