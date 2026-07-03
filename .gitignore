@@ -7,6 +7,13 @@ build/
 
 ### Environment ###
 .env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p8
+*service-account*.json
+firebase-service-account*.json
 
 ### STS ###
 .apt_generated
@@ -38,3 +45,5 @@ out/
 
 ### VS Code ###
 .vscode/
+
+
