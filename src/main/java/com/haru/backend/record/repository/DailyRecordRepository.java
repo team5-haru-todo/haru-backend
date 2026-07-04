@@ -8,12 +8,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 public interface DailyRecordRepository extends JpaRepository<DailyRecord, Long> {
 
     Optional<DailyRecord> findByUserIdAndRecordDate(UUID userId, LocalDate recordDate);
+
+    List<DailyRecord> findByUserIdAndRecordDateBetween(UUID userId, LocalDate startDate, LocalDate endDate);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT dr FROM DailyRecord dr WHERE dr.userId = :userId AND dr.recordDate = :recordDate")
