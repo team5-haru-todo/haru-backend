@@ -1,13 +1,17 @@
-name: Publish Backend Docker Image
+name: Build and Deploy Backend
 
 on:
-  # Actions 화면에서 태그를 입력해 수동으로 이미지를 발행할 수 있다.
+  # main에 머지되면 자동으로 빌드 + 배포한다.
+  push:
+    branches: [main]
+  # Actions 화면에서 태그를 입력해 수동으로 빌드 + 배포할 수 있다.
   workflow_dispatch:
     inputs:
       image_tag:
         description: Docker image tag to publish
         required: true
         default: deploy-test
+
 env:
   AWS_REGION: ${{ vars.AWS_REGION }}
   ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
@@ -15,6 +19,10 @@ env:
 jobs:
   publish:
     runs-on: ubuntu-latest
+
+    # deploy job이 쓸 수 있게 태그를 출력한다.
+    outputs:
+      image_tag: ${{ steps.tag.outputs.value }}
 
     permissions:
       contents: read
@@ -37,10 +45,20 @@ jobs:
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      # 수동 실행 시 입력한 태그를 이미지 태그로 사용한다.
+      # 수동 실행이면 입력 태그를, main push면 커밋 SHA를 태그로 사용한다.
+      # 입력값은 env로 받아 스크립트 인젝션을 피하고, Docker 태그 형식을 검증한다.
       - name: Resolve image tag
         id: tag
-        run: echo "value=${{ inputs.image_tag }}" >> "$GITHUB_OUTPUT"
+        env:
+          INPUT_TAG: ${{ inputs.image_tag }}
+          SHA: ${{ github.sha }}
+        run: |
+          TAG="${INPUT_TAG:-$SHA}"
+          if ! printf '%s' "$TAG" | grep -Eq '^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$'; then
+            echo "::error::Invalid Docker image tag. Use 1-128 characters from A-Z, a-z, 0-9, _, ., or -, and start with an alphanumeric character or _."
+            exit 1
+          fi
+          echo "value=$TAG" >> "$GITHUB_OUTPUT"
 
       # Dockerfile로 이미지를 빌드하고 ECR에 태그 2개를 함께 올린다.
       - name: Build and push image
@@ -52,3 +70,49 @@ jobs:
           tags: |
             ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ steps.tag.outputs.value }}
             ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+
+  deploy:
+    needs: publish
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # publish가 올린 그 태그를 EC2로 전달해 SSM으로 배포한다.
+      - name: Deploy on EC2 via SSM
+        run: |
+          TAG="${{ needs.publish.outputs.image_tag }}"
+          CMD_ID=$(aws ssm send-command \
+            --instance-ids "${{ secrets.EC2_INSTANCE_ID }}" \
+            --document-name "AWS-RunShellScript" \
+            --comment "Deploy haru-backend $TAG" \
+            --parameters "commands=[\"bash /home/ubuntu/haru/deploy.sh $TAG\"]" \
+            --query "Command.CommandId" --output text)
+          echo "Command ID: $CMD_ID (tag: $TAG)"
+
+          aws ssm wait command-executed \
+            --command-id "$CMD_ID" \
+            --instance-id "${{ secrets.EC2_INSTANCE_ID }}" || true
+
+          echo "=== STDOUT ==="
+          aws ssm get-command-invocation --command-id "$CMD_ID" \
+            --instance-id "${{ secrets.EC2_INSTANCE_ID }}" \
+            --query "StandardOutputContent" --output text
+          echo "=== STDERR ==="
+          aws ssm get-command-invocation --command-id "$CMD_ID" \
+            --instance-id "${{ secrets.EC2_INSTANCE_ID }}" \
+            --query "StandardErrorContent" --output text
+
+          STATUS=$(aws ssm get-command-invocation --command-id "$CMD_ID" \
+            --instance-id "${{ secrets.EC2_INSTANCE_ID }}" \
+            --query "Status" --output text)
+          echo "Status: $STATUS"
+          [ "$STATUS" = "Success" ]
