@@ -22,16 +22,25 @@ public record TaskResponse(
 
         @Schema(description = "할 일 생성 시각. 프론트에서 '3일 전' 같은 상대 시간 표시에 사용할 수 있다.",
                 example = "2026-06-30T00:00:00Z")
-        Instant createdAt
+        Instant createdAt,
+
+        @Schema(description = "오늘 완료한 할 일인지 여부. 반복 할 일의 오늘 도전 버튼 비활성화에 사용할 수 있다.",
+                example = "false")
+        boolean completedToday
 ) {
 
     public static TaskResponse from(Task task) {
+        return from(task, false);
+    }
+
+    public static TaskResponse from(Task task, boolean completedToday) {
         return new TaskResponse(
                 task.getId(),
                 task.getContent(),
                 task.getTaskType(),
                 task.getDisplayOrder(),
-                task.getCreatedAt()
+                task.getCreatedAt(),
+                completedToday
         );
     }
 }
