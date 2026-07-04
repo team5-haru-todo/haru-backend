@@ -46,11 +46,18 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       # 수동 실행이면 입력 태그를, main push면 커밋 SHA를 태그로 사용한다.
+      # 입력값은 env로 받아 스크립트 인젝션을 피하고, Docker 태그 형식을 검증한다.
       - name: Resolve image tag
         id: tag
+        env:
+          INPUT_TAG: ${{ inputs.image_tag }}
+          SHA: ${{ github.sha }}
         run: |
-          TAG="${{ inputs.image_tag }}"
-          if [ -z "$TAG" ]; then TAG="${{ github.sha }}"; fi
+          TAG="${INPUT_TAG:-$SHA}"
+          if ! printf '%s' "$TAG" | grep -Eq '^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$'; then
+            echo "::error::Invalid Docker image tag. Use 1-128 characters from A-Z, a-z, 0-9, _, ., or -, and start with an alphanumeric character or _."
+            exit 1
+          fi
           echo "value=$TAG" >> "$GITHUB_OUTPUT"
 
       # Dockerfile로 이미지를 빌드하고 ECR에 태그 2개를 함께 올린다.
