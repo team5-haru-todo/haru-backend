@@ -16,6 +16,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -36,6 +37,12 @@ class TaskServiceTest {
     private TaskService taskService;
 
     private final UUID userId = UUID.randomUUID();
+
+    private Task taskWithId(long id, String content, TaskType type) {
+        Task task = Task.create(userId, content, type);
+        ReflectionTestUtils.setField(task, "id", id);
+        return task;
+    }
 
     @Test
     @DisplayName("할 일을 생성하면 저장하고 응답을 반환한다")
@@ -61,6 +68,41 @@ class TaskServiceTest {
         TaskResponse response = taskService.create(userId, request);
 
         assertThat(response.taskType()).isEqualTo(TaskType.GENERAL);
+    }
+
+    @Test
+    @DisplayName("완료된 GENERAL 이 없으면 목록을 그대로 반환한다")
+    void getTasksWithoutCompletion() {
+        given(taskRepository.findAllByUserIdAndDeletedAtIsNullOrderByDisplayOrderAsc(userId))
+                .willReturn(List.of(
+                        taskWithId(1L, "운동하기", TaskType.GENERAL),
+                        taskWithId(2L, "영양제 먹기", TaskType.RECURRING)
+                ));
+        given(taskRepository.findCompletedTaskIds(List.of(1L))).willReturn(List.of());
+
+        List<TaskResponse> result = taskService.getTasks(userId);
+
+        assertThat(result).extracting(TaskResponse::content)
+                .containsExactly("운동하기", "영양제 먹기");
+    }
+
+    @Test
+    @DisplayName("완료 기록이 있는 GENERAL 은 제외하고, RECURRING 은 완료돼도 포함한다")
+    void getTasksExcludesCompletedGeneral() {
+        given(taskRepository.findAllByUserIdAndDeletedAtIsNullOrderByDisplayOrderAsc(userId))
+                .willReturn(List.of(
+                        taskWithId(1L, "운동하기", TaskType.GENERAL),
+                        taskWithId(2L, "영양제 먹기", TaskType.RECURRING),
+                        taskWithId(3L, "물 마시기", TaskType.GENERAL)
+                ));
+        // GENERAL 후보(1L, 3L) 중 1L 만 완료됨
+        given(taskRepository.findCompletedTaskIds(List.of(1L, 3L))).willReturn(List.of(1L));
+
+        List<TaskResponse> result = taskService.getTasks(userId);
+
+        // 완료된 GENERAL(운동하기) 제외, RECURRING(영양제) 포함, 미완료 GENERAL(물 마시기) 포함
+        assertThat(result).extracting(TaskResponse::content)
+                .containsExactly("영양제 먹기", "물 마시기");
     }
 
     @Test
@@ -143,20 +185,5 @@ class TaskServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .extracting(e -> ((BusinessException) e).getErrorCode())
                 .isEqualTo(ErrorCode.TASK_NOT_FOUND);
-    }
-
-    @Test
-    @DisplayName("목록 조회는 Repository 결과를 응답으로 변환한다")
-    void getTasks() {
-        given(taskRepository.findAllByUserIdAndDeletedAtIsNullOrderByDisplayOrderAsc(userId))
-                .willReturn(List.of(
-                        Task.create(userId, "운동하기", TaskType.GENERAL),
-                        Task.create(userId, "영양제 먹기", TaskType.RECURRING)
-                ));
-
-        List<TaskResponse> result = taskService.getTasks(userId);
-
-        assertThat(result).extracting(TaskResponse::content)
-                .containsExactly("운동하기", "영양제 먹기");
     }
 }
