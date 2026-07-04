@@ -18,12 +18,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -79,11 +82,15 @@ class TaskServiceTest {
                         taskWithId(2L, "영양제 먹기", TaskType.RECURRING)
                 ));
         given(taskRepository.findCompletedTaskIds(List.of(1L))).willReturn(List.of());
+        given(taskRepository.findCompletedTaskIdsByUserIdAndRecordDate(eq(userId), any(LocalDate.class)))
+                .willReturn(List.of());
 
         List<TaskResponse> result = taskService.getTasks(userId);
 
         assertThat(result).extracting(TaskResponse::content)
                 .containsExactly("운동하기", "영양제 먹기");
+        assertThat(result).extracting(TaskResponse::completedToday)
+                .containsExactly(false, false);
     }
 
     @Test
@@ -97,12 +104,16 @@ class TaskServiceTest {
                 ));
         // GENERAL 후보(1L, 3L) 중 1L 만 완료됨
         given(taskRepository.findCompletedTaskIds(List.of(1L, 3L))).willReturn(List.of(1L));
+        given(taskRepository.findCompletedTaskIdsByUserIdAndRecordDate(eq(userId), any(LocalDate.class)))
+                .willReturn(List.of(2L));
 
         List<TaskResponse> result = taskService.getTasks(userId);
 
         // 완료된 GENERAL(운동하기) 제외, RECURRING(영양제) 포함, 미완료 GENERAL(물 마시기) 포함
         assertThat(result).extracting(TaskResponse::content)
                 .containsExactly("영양제 먹기", "물 마시기");
+        assertThat(result).extracting(TaskResponse::completedToday)
+                .containsExactly(true, false);
     }
 
     @Test

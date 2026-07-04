@@ -75,7 +75,7 @@ class TaskControllerTest {
     void create() throws Exception {
         given(taskService.create(eq(userId), any(TaskCreateRequest.class)))
                 .willReturn(new TaskResponse(1L, "운동하기", TaskType.GENERAL, 0,
-                        Instant.parse("2026-06-30T00:00:00Z")));
+                        Instant.parse("2026-06-30T00:00:00Z"), false));
 
         mockMvc.perform(post("/api/tasks")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -104,8 +104,8 @@ class TaskControllerTest {
     @DisplayName("할 일 목록 조회 → 200 OK")
     void getTasks() throws Exception {
         given(taskService.getTasks(userId)).willReturn(List.of(
-                new TaskResponse(1L, "운동하기", TaskType.GENERAL, 0, Instant.parse("2026-06-30T00:00:00Z")),
-                new TaskResponse(2L, "영양제 먹기", TaskType.RECURRING, 1, Instant.parse("2026-06-30T00:00:00Z"))
+                new TaskResponse(1L, "운동하기", TaskType.GENERAL, 0, Instant.parse("2026-06-30T00:00:00Z"), false),
+                new TaskResponse(2L, "영양제 먹기", TaskType.RECURRING, 1, Instant.parse("2026-06-30T00:00:00Z"), true)
         ));
 
         mockMvc.perform(get("/api/tasks"))
@@ -113,7 +113,9 @@ class TaskControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.length()").value(2))
                 .andExpect(jsonPath("$.data[0].content").value("운동하기"))
-                .andExpect(jsonPath("$.data[1].taskType").value("RECURRING"));
+                .andExpect(jsonPath("$.data[0].completedToday").value(false))
+                .andExpect(jsonPath("$.data[1].taskType").value("RECURRING"))
+                .andExpect(jsonPath("$.data[1].completedToday").value(true));
     }
 
     @Test

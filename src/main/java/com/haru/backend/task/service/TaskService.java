@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -22,6 +24,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class TaskService {
+
+    private static final ZoneId SEOUL = ZoneId.of("Asia/Seoul");
 
     private final TaskRepository taskRepository;
 
@@ -43,11 +47,12 @@ public class TaskService {
         Set<Long> completedTaskIds = generalTaskIds.isEmpty()
                 ? Set.of()
                 : new HashSet<>(taskRepository.findCompletedTaskIds(generalTaskIds));
+        Set<Long> completedTodayTaskIds = findCompletedTodayTaskIds(userId);
 
         return tasks.stream()
                 .filter(task -> task.getTaskType() == TaskType.RECURRING
                         || !completedTaskIds.contains(task.getId()))
-                .map(TaskResponse::from)
+                .map(task -> TaskResponse.from(task, completedTodayTaskIds.contains(task.getId())))
                 .toList();
     }
 
@@ -82,5 +87,13 @@ public class TaskService {
     private Task getOwnedTask(UUID userId, Long taskId) {
         return taskRepository.findByIdAndUserIdAndDeletedAtIsNull(taskId, userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.TASK_NOT_FOUND));
+    }
+
+    private Set<Long> findCompletedTodayTaskIds(UUID userId) {
+        return new HashSet<>(taskRepository.findCompletedTaskIdsByUserIdAndRecordDate(userId, today()));
+    }
+
+    private LocalDate today() {
+        return LocalDate.now(SEOUL);
     }
 }
