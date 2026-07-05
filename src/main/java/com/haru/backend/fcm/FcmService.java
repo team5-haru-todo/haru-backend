@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 public class FcmService {
 
     public void sendMessage(String token,String title, String body){
-        //메세지 조립
+        //프론트에서 받은 토큰으로 메세지 조립 시작!
         Message message = Message.builder()
                 .setToken(token)                          //디바이스 토큰(누구한테)
                 .setNotification(Notification.builder()   // 무슨 내용
