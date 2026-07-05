@@ -14,5 +14,8 @@ services:
     ports:
       - "8080:8080"
 
+    volumes:
+      - "${FIREBASE_SERVICE_ACCOUNT_HOST_PATH:?FIREBASE_SERVICE_ACCOUNT_HOST_PATH must be set}:/app/secrets/firebase-service-account.json:ro"
+
     # 사용자가 명시적으로 중지하지 않는 한 장애나 재부팅 후에도 다시 실행한다.
     restart: unless-stopped
