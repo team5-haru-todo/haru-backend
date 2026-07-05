@@ -22,7 +22,8 @@ WORKDIR /app
 ENV TZ=Asia/Seoul
 
 # 컨테이너 내부에서 root가 아닌 전용 사용자로 앱을 실행한다.
-RUN groupadd --system haru && useradd --system --gid haru --home-dir /app --shell /usr/sbin/nologin haru
+RUN groupadd --system --gid 10001 haru \
+ && useradd --system --uid 10001 --gid 10001 --home-dir /app --shell /usr/sbin/nologin haru
 
 COPY --from=builder /workspace/build/libs/app.jar app.jar
 
