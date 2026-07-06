@@ -45,4 +45,24 @@ public class AuthController {
     public ApiResponse<Void> logout(@LoginUser UUID userId) {
         return ApiResponse.ok("로그아웃 되었습니다.", null);
     }
+
+    @SecurityRequirement(name = "bearerAuth")
+    @PostMapping("/kakao/link")
+    public ApiResponse<LoginResponse> linkKakao(
+            @LoginUser UUID userId,
+            @RequestBody KakaoLoginRequest request
+    ) {
+        LoginResponse response = authService.linkKakao(userId, request);
+        return ApiResponse.ok("카카오 계정이 연동되었습니다.", response);
+    }
+
+    @SecurityRequirement(name = "bearerAuth")
+    @PostMapping("/apple/link")
+    public ApiResponse<LoginResponse> linkApple(
+            @LoginUser UUID userId,
+            @RequestBody AppleLoginRequest request
+    ) {
+        LoginResponse response = authService.linkApple(userId, request);
+        return ApiResponse.ok("Apple 계정이 연동되었습니다.", response);
+    }
 }
