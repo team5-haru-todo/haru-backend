@@ -1,5 +1,6 @@
 package com.haru.backend.global.security;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,8 +28,8 @@ public class JwtProvider {
     public String createAccessToken(UUID userId) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + accessTokenValidityMs);
-
         return Jwts.builder()
+                .id(UUID.randomUUID().toString()) // 토큰마다 고유 ID(JTI) 부여 — 무효화 처리를 위해 필요
                 .subject(userId.toString())
                 .issuedAt(now)
                 .expiration(expiry)
@@ -37,12 +38,22 @@ public class JwtProvider {
     }
 
     public UUID getUserId(String token) {
-        String subject = Jwts.parser()
+        return UUID.fromString(getClaims(token).getSubject());
+    }
+
+    public String getTokenId(String token) {
+        return getClaims(token).getId();
+    }
+
+    public Date getExpiration(String token) {
+        return getClaims(token).getExpiration();
+    }
+
+    private Claims getClaims(String token) {
+        return Jwts.parser()
                 .verifyWith(secretKey)
                 .build()
                 .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
-        return UUID.fromString(subject);
+                .getPayload();
     }
 }
