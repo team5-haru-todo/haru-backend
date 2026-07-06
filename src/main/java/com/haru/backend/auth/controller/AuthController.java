@@ -6,8 +6,11 @@ import com.haru.backend.auth.dto.LoginResponse;
 import com.haru.backend.auth.service.AuthService;
 import com.haru.backend.global.response.ApiResponse;
 import com.haru.backend.global.security.LoginUser;
+import com.haru.backend.global.security.TokenInvalidationService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,7 +23,10 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AuthController {
 
+    private static final String BEARER_PREFIX = "Bearer ";
+
     private final AuthService authService;
+    private final TokenInvalidationService tokenInvalidationService;
 
     @PostMapping("/guest")
     public ApiResponse<LoginResponse> loginAsGuest() {
@@ -42,7 +48,8 @@ public class AuthController {
 
     @SecurityRequirement(name = "bearerAuth")
     @PostMapping("/logout")
-    public ApiResponse<Void> logout(@LoginUser UUID userId) {
+    public ApiResponse<Void> logout(@LoginUser UUID userId, HttpServletRequest request) {
+        resolveToken(request).ifPresent(tokenInvalidationService::invalidate);
         return ApiResponse.ok("로그아웃 되었습니다.", null);
     }
 
@@ -64,5 +71,13 @@ public class AuthController {
     ) {
         LoginResponse response = authService.linkApple(userId, request);
         return ApiResponse.ok("Apple 계정이 연동되었습니다.", response);
+    }
+
+    private java.util.Optional<String> resolveToken(HttpServletRequest request) {
+        String header = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (header != null && header.startsWith(BEARER_PREFIX)) {
+            return java.util.Optional.of(header.substring(BEARER_PREFIX.length()));
+        }
+        return java.util.Optional.empty();
     }
 }
