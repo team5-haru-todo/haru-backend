@@ -34,12 +34,13 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        // 공개 엔드포인트: 로그인 진입점 + 문서/헬스.
+                        // 공개 엔드포인트: 로그인 진입점 + 문서/헬스 + 소셜 플랫폼 웹훅.
                         // logout/withdraw 등 인증이 필요한 auth API가 와일드카드로 자동 노출되지 않도록 명시적으로 나열한다.
                         .requestMatchers(
                                 "/api/auth/guest",
                                 "/api/auth/kakao",
                                 "/api/auth/apple",
+                                "/api/webhooks/**",
                                 "/actuator/health",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
@@ -51,7 +52,6 @@ public class SecurityConfig {
                         handler.authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-
         return http.build();
     }
 }
