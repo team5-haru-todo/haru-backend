@@ -48,6 +48,9 @@ public class User {
     @Column(name = "withdrawn_at")
     private LocalDateTime withdrawnAt;
 
+    @Column(name = "has_seen_onboarding", nullable = false)
+    private boolean hasSeenOnboarding = false;
+
     public static User createGuest() {
         User user = new User();
         user.status = "GUEST";
@@ -85,5 +88,9 @@ public class User {
     public void withdraw() {
         this.status = "WITHDRAWN";
         this.withdrawnAt = LocalDateTime.now();
+    }
+
+    public void completeOnboarding() {
+        this.hasSeenOnboarding = true;
     }
 }

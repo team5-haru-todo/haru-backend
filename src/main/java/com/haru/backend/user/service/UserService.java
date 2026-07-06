@@ -44,6 +44,7 @@ public class UserService {
     public UserSettingsResponse getMySettings(UUID userId) {
         UserSettings settings = userSettingsRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
         return UserSettingsResponse.of(settings);
     }
 
@@ -71,5 +72,13 @@ public class UserService {
                 userId, request.reasons(), request.etcReason());
 
         user.withdraw();
+    }
+
+    @Transactional
+    public void completeOnboarding(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        user.completeOnboarding();
     }
 }

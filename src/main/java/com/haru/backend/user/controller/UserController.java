@@ -50,4 +50,10 @@ public class UserController {
         userService.withdraw(userId, request);
         return ApiResponse.ok("탈퇴가 완료되었습니다.", null);
     }
+
+    @PostMapping("/me/onboarding")
+    public ApiResponse<Void> completeOnboarding(@LoginUser UUID userId) {
+        userService.completeOnboarding(userId);
+        return ApiResponse.ok("온보딩이 완료되었습니다.", null);
+    }
 }

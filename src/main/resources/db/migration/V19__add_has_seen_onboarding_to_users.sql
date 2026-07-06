@@ -1,0 +1,2 @@
+ALTER TABLE users
+ADD COLUMN has_seen_onboarding BOOLEAN NOT NULL DEFAULT FALSE;
