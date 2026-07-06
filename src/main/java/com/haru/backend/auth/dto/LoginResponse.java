@@ -13,13 +13,20 @@ public record LoginResponse(
             UUID id,
             String nickname,
             String status,
-            List<String> connectedProviders
+            List<String> connectedProviders,
+            boolean hasSeenOnboarding
     ) {}
 
     public static LoginResponse of(String accessToken, User user, List<String> connectedProviders) {
         return new LoginResponse(
                 accessToken,
-                new UserInfo(user.getId(), user.getNickname(), user.getStatus(), connectedProviders)
+                new UserInfo(
+                        user.getId(),
+                        user.getNickname(),
+                        user.getStatus(),
+                        connectedProviders,
+                        user.isHasSeenOnboarding()
+                )
         );
     }
 }
