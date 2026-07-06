@@ -71,6 +71,12 @@ public class UserService {
         log.info("회원 탈퇴 - userId: {}, reasons: {}, etcReason: {}",
                 userId, request.reasons(), request.etcReason());
 
+        // 탈퇴 시 소셜 계정 연동 정보도 함께 정리한다.
+        // (재가입 시 같은 소셜 계정으로 다시 연동할 수 있도록 하기 위함 —
+        //  탈퇴한 계정이 소셜 고유값을 계속 붙잡고 있으면 새 계정에서 재연동이 막히는 문제가 있었음)
+        List<SocialAccount> socialAccounts = socialAccountRepository.findAllByUser(user);
+        socialAccountRepository.deleteAll(socialAccounts);
+
         user.withdraw();
     }
 
