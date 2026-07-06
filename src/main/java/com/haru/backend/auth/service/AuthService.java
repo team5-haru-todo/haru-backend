@@ -6,6 +6,8 @@ import com.haru.backend.auth.client.KakaoUserInfoResponse;
 import com.haru.backend.auth.dto.AppleLoginRequest;
 import com.haru.backend.auth.dto.KakaoLoginRequest;
 import com.haru.backend.auth.dto.LoginResponse;
+import com.haru.backend.global.exception.BusinessException;
+import com.haru.backend.global.exception.ErrorCode;
 import com.haru.backend.global.security.JwtProvider;
 import com.haru.backend.user.entity.SocialAccount;
 import com.haru.backend.user.entity.User;
@@ -21,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -81,6 +84,65 @@ public class AuthService {
                     createDefaultSettingsAndStats(newUser);
                     return newUser;
                 });
+
+        List<String> connectedProviders = socialAccountRepository.findAllByUser(user).stream()
+                .map(SocialAccount::getProvider)
+                .toList();
+
+        String accessToken = jwtProvider.createAccessToken(user.getId());
+        return LoginResponse.of(accessToken, user, connectedProviders);
+    }
+
+    /**
+     * 게스트 계정에 카카오 계정을 연동한다.
+     * 새 유저를 만들지 않고, 현재 로그인된(게스트) 유저에 SocialAccount를 붙이고 ACTIVE로 승격한다.
+     */
+    @Transactional
+    public LoginResponse linkKakao(UUID userId, KakaoLoginRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        KakaoUserInfoResponse kakaoUser = kakaoAuthClient.getUserInfo(request.accessToken());
+        String providerUserId = String.valueOf(kakaoUser.id());
+
+        boolean alreadyLinked = socialAccountRepository
+                .findByProviderAndProviderUserId("KAKAO", providerUserId)
+                .isPresent();
+        if (alreadyLinked) {
+            throw new BusinessException(ErrorCode.SOCIAL_ACCOUNT_ALREADY_LINKED);
+        }
+
+        socialAccountRepository.save(new SocialAccount(user, "KAKAO", providerUserId));
+        user.activate(request.termsVersion(), request.agreedAt());
+
+        List<String> connectedProviders = socialAccountRepository.findAllByUser(user).stream()
+                .map(SocialAccount::getProvider)
+                .toList();
+
+        String accessToken = jwtProvider.createAccessToken(user.getId());
+        return LoginResponse.of(accessToken, user, connectedProviders);
+    }
+
+    /**
+     * 게스트 계정에 Apple 계정을 연동한다.
+     * 새 유저를 만들지 않고, 현재 로그인된(게스트) 유저에 SocialAccount를 붙이고 ACTIVE로 승격한다.
+     */
+    @Transactional
+    public LoginResponse linkApple(UUID userId, AppleLoginRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        String providerUserId = appleTokenVerifier.verifyAndGetSubject(request.identityToken());
+
+        boolean alreadyLinked = socialAccountRepository
+                .findByProviderAndProviderUserId("APPLE", providerUserId)
+                .isPresent();
+        if (alreadyLinked) {
+            throw new BusinessException(ErrorCode.SOCIAL_ACCOUNT_ALREADY_LINKED);
+        }
+
+        socialAccountRepository.save(new SocialAccount(user, "APPLE", providerUserId));
+        user.activate(request.termsVersion(), request.agreedAt());
 
         List<String> connectedProviders = socialAccountRepository.findAllByUser(user).stream()
                 .map(SocialAccount::getProvider)
