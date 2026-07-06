@@ -13,7 +13,8 @@ public record UserResponse(
         List<String> connectedProviders,
         String termsVersion,
         LocalDateTime termsAgreedAt,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        boolean hasSeenOnboarding
 ) {
     public static UserResponse of(User user, List<String> connectedProviders) {
         return new UserResponse(
@@ -23,7 +24,8 @@ public record UserResponse(
                 connectedProviders,
                 user.getTermsVersion(),
                 user.getTermsAgreedAt(),
-                user.getCreatedAt()
+                user.getCreatedAt(),
+                user.isHasSeenOnboarding()
         );
     }
 }
