@@ -3,6 +3,7 @@ package com.haru.backend.auth.controller;
 import com.haru.backend.auth.dto.AppleLoginRequest;
 import com.haru.backend.auth.dto.KakaoLoginRequest;
 import com.haru.backend.auth.dto.LoginResponse;
+import com.haru.backend.auth.dto.SocialUserCheckResponse;
 import com.haru.backend.auth.service.AuthService;
 import com.haru.backend.global.response.ApiResponse;
 import com.haru.backend.global.security.LoginUser;
@@ -14,8 +15,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -32,6 +35,25 @@ public class AuthController {
     public ApiResponse<LoginResponse> loginAsGuest() {
         LoginResponse response = authService.loginAsGuest();
         return ApiResponse.ok("게스트로 시작합니다.", response);
+    }
+
+    /**
+     * 카카오 SDK 로그인 직후, 실제 가입 처리를 하기 전에 신규 유저인지 확인한다.
+     * 신규면 프론트에서 약관 동의 화면을 보여준 뒤 /kakao로 다시 요청해야 한다.
+     */
+    @PostMapping("/kakao/check")
+    public ApiResponse<SocialUserCheckResponse> checkKakaoUser(@RequestParam("accessToken") String accessToken) {
+        SocialUserCheckResponse response = authService.checkKakaoUser(accessToken);
+        return ApiResponse.ok(response);
+    }
+
+    /**
+     * Apple SDK 로그인 직후, 실제 가입 처리를 하기 전에 신규 유저인지 확인한다.
+     */
+    @PostMapping("/apple/check")
+    public ApiResponse<SocialUserCheckResponse> checkAppleUser(@RequestParam("identityToken") String identityToken) {
+        SocialUserCheckResponse response = authService.checkAppleUser(identityToken);
+        return ApiResponse.ok(response);
     }
 
     @PostMapping("/kakao")
@@ -73,11 +95,11 @@ public class AuthController {
         return ApiResponse.ok("Apple 계정이 연동되었습니다.", response);
     }
 
-    private java.util.Optional<String> resolveToken(HttpServletRequest request) {
+    private Optional<String> resolveToken(HttpServletRequest request) {
         String header = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (header != null && header.startsWith(BEARER_PREFIX)) {
-            return java.util.Optional.of(header.substring(BEARER_PREFIX.length()));
+            return Optional.of(header.substring(BEARER_PREFIX.length()));
         }
-        return java.util.Optional.empty();
+        return Optional.empty();
     }
 }

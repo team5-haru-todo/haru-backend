@@ -39,7 +39,9 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/auth/guest",
                                 "/api/auth/kakao",
+                                "/api/auth/kakao/check",
                                 "/api/auth/apple",
+                                "/api/auth/apple/check",
                                 "/api/webhooks/**",
                                 "/actuator/health",
                                 "/swagger-ui/**",
