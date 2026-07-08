@@ -59,6 +59,9 @@ public class UserService {
         if (request.timezone() != null) {
             settings.updateTimezone(request.timezone());
         }
+        if (request.notificationPromptSeen() != null) {
+            settings.updateNotificationPromptSeen(request.notificationPromptSeen());
+        }
 
         return UserSettingsResponse.of(settings);
     }

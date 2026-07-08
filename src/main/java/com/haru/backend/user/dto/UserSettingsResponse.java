@@ -4,9 +4,14 @@ import com.haru.backend.user.entity.UserSettings;
 
 public record UserSettingsResponse(
         boolean pushEnabled,
-        String timezone
+        String timezone,
+        boolean notificationPromptSeen
 ) {
     public static UserSettingsResponse of(UserSettings settings) {
-        return new UserSettingsResponse(settings.isPushEnabled(), settings.getTimezone());
+        return new UserSettingsResponse(
+                settings.isPushEnabled(),
+                settings.getTimezone(),
+                settings.isNotificationPromptSeen()
+        );
     }
 }
