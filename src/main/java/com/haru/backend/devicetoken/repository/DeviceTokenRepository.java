@@ -47,7 +47,7 @@ public interface DeviceTokenRepository extends JpaRepository<DeviceToken, Long> 
     List<String> findActiveTokensWithUncompletedTodayTask(@Param("date") LocalDate date);
 
     // '오늘의 한 개'는 완료했지만(first_completed_at 존재),
-    // 아직 완료 기록이 없는 할 일이 남아있는 사용자.
+    // 이후 도전한(current_task로 올라온) 할 일을 아직 완료하지 않은 사용자.
     @Query(value = """
             SELECT dt.token
             FROM device_tokens dt
@@ -60,19 +60,12 @@ public interface DeviceTokenRepository extends JpaRepository<DeviceToken, Long> 
                   WHERE dr.user_id = dt.user_id
                     AND dr.record_date = :date
                     AND dr.first_completed_at IS NOT NULL
-              )
-              AND EXISTS (
-                  SELECT 1
-                  FROM tasks t
-                  WHERE t.user_id = dt.user_id
-                    AND t.deleted_at IS NULL
+                    AND dr.current_task_id IS NOT NULL
                     AND NOT EXISTS (
                         SELECT 1
                         FROM task_completions tc
-                        JOIN daily_records dr2 ON dr2.id = tc.daily_record_id
-                        WHERE dr2.user_id = dt.user_id
-                          AND dr2.record_date = :date
-                          AND tc.task_id = t.id
+                        WHERE tc.daily_record_id = dr.id
+                          AND tc.task_id = dr.current_task_id
                     )
               )
             """, nativeQuery = true)
