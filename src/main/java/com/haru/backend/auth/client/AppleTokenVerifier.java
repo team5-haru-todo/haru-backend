@@ -40,25 +40,65 @@ public class AppleTokenVerifier {
 
             RSAKey rsaKey = jwk.toRSAKey();
             JWSVerifier verifier = new RSASSAVerifier(rsaKey);
-
             if (!signedJWT.verify(verifier)) {
                 throw new BusinessException(ErrorCode.INVALID_APPLE_TOKEN);
             }
 
             JWTClaimsSet claims = signedJWT.getJWTClaimsSet();
-
             if (!APPLE_ISSUER.equals(claims.getIssuer())) {
                 throw new BusinessException(ErrorCode.INVALID_APPLE_TOKEN);
             }
+
             if (claims.getAudience() == null || !claims.getAudience().contains(appleBundleId)) {
                 throw new BusinessException(ErrorCode.INVALID_APPLE_TOKEN);
             }
+
             Date expiration = claims.getExpirationTime();
             if (expiration == null || expiration.before(new Date())) {
                 throw new BusinessException(ErrorCode.INVALID_APPLE_TOKEN);
             }
 
             return claims.getSubject();
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.INVALID_APPLE_TOKEN);
+        }
+    }
+
+    /**
+     * Server-to-Server Notification의 payload(JWT)를 검증하고 클레임 전체를 반환한다.
+     * 일반 identityToken 검증과 달리 audience 체크는 하지 않는다
+     * (Apple 웹훅 payload의 클레임 구조는 로그인용 identityToken과 다르다).
+     */
+    public JWTClaimsSet verifyAndGetClaims(String token) {
+        try {
+            SignedJWT signedJWT = SignedJWT.parse(token);
+            String kid = signedJWT.getHeader().getKeyID();
+
+            JWKSet jwkSet = JWKSet.load(new URL(APPLE_KEYS_URL));
+            JWK jwk = jwkSet.getKeyByKeyId(kid);
+            if (jwk == null) {
+                throw new BusinessException(ErrorCode.INVALID_APPLE_TOKEN);
+            }
+
+            RSAKey rsaKey = jwk.toRSAKey();
+            JWSVerifier verifier = new RSASSAVerifier(rsaKey);
+            if (!signedJWT.verify(verifier)) {
+                throw new BusinessException(ErrorCode.INVALID_APPLE_TOKEN);
+            }
+
+            JWTClaimsSet claims = signedJWT.getJWTClaimsSet();
+            if (!APPLE_ISSUER.equals(claims.getIssuer())) {
+                throw new BusinessException(ErrorCode.INVALID_APPLE_TOKEN);
+            }
+
+            Date expiration = claims.getExpirationTime();
+            if (expiration == null || expiration.before(new Date())) {
+                throw new BusinessException(ErrorCode.INVALID_APPLE_TOKEN);
+            }
+
+            return claims;
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {
