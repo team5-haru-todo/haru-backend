@@ -26,45 +26,41 @@ public class DeviceTokenReminderScheduler {
     public void sendMorningReminder() {
         LocalDate today = LocalDate.now(SEOUL);
 
-        // 오전 9시에는 아직 오늘의 한 개를 고르지 않은 사용자에게만 보낸다.
+        // 오전 9시: 아직 '오늘의 한 개'를 정하지 않은 사용자.
         List<String> tokens = deviceTokenRepository.findActiveTokensWithoutTodayTask(today);
-        sendToTokens(
-                tokens,
-                "오늘의 한 개를 정해볼까요?",
-                "작은 일 하나만 골라도 충분해요."
-        );
+        sendRandom(tokens, ReminderMessages.MORNING_NO_TASK, "morning-no-task");
     }
 
     @Scheduled(cron = "0 0 21 * * *", zone = "Asia/Seoul")
     public void sendEveningReminder() {
         LocalDate today = LocalDate.now(SEOUL);
 
-        // 오후 9시에는 오늘의 한 개를 아직 고르지 않은 사용자에게 한 번 더 알려준다.
+        // 오후 9시 ①: 오늘 '오늘의 한 개'를 정하지 않은 사용자.
         List<String> unselectedTokens = deviceTokenRepository.findActiveTokensWithoutTodayTask(today);
-        sendToTokens(
-                unselectedTokens,
-                "오늘의 한 개를 아직 정하지 않았어요",
-                "늦지 않았어요. 지금 하나만 정해볼까요?"
-        );
+        sendRandom(unselectedTokens, ReminderMessages.EVENING_NO_TASK, "evening-no-task");
 
-        // 오늘의 한 개를 골랐지만 완료하지 않은 사용자는 다른 문구로 마무리를 유도한다.
+        // 오후 9시 ②: '오늘의 한 개'를 정했지만 아직 완료하지 않은 사용자.
         List<String> uncompletedTokens = deviceTokenRepository.findActiveTokensWithUncompletedTodayTask(today);
-        sendToTokens(
-                uncompletedTokens,
-                "오늘의 한 개를 완료해볼까요?",
-                "작게라도 끝내면 오늘의 불꽃을 받을 수 있어요."
-        );
+        sendRandom(uncompletedTokens, ReminderMessages.EVENING_UNCOMPLETED, "evening-uncompleted");
+
+        // 오후 9시 ③: '오늘의 한 개'는 완료했지만 추가로 완료하지 않은 할 일이 남아있는 사용자.
+        List<String> remainingTokens = deviceTokenRepository.findActiveTokensWithCompletedButRemainingTasks(today);
+        sendRandom(remainingTokens, ReminderMessages.EVENING_COMPLETED_WITH_REMAINING, "evening-completed-remaining");
     }
 
-    private void sendToTokens(List<String> tokens, String title, String body) {
+    /**
+     * 대상 토큰마다 문구 목록에서 하나를 랜덤으로 골라 발송한다.
+     */
+    private void sendRandom(List<String> tokens, List<ReminderMessage> pool, String caseName) {
         if (tokens.isEmpty()) {
-            log.info("발송할 디바이스 토큰이 없습니다. title={}", title);
+            log.info("발송할 디바이스 토큰이 없습니다. case={}", caseName);
             return;
         }
 
         for (String token : tokens) {
-            fcmService.sendMessage(token, title, body);
+            ReminderMessage message = ReminderMessages.pickRandom(pool);
+            fcmService.sendMessage(token, message.title(), message.body());
         }
-        log.info("예약 푸시 발송 완료. title={}, count={}", title, tokens.size());
+        log.info("예약 푸시 발송 완료. case={}, count={}", caseName, tokens.size());
     }
 }
