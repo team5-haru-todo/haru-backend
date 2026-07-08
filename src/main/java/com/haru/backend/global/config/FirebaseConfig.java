@@ -7,9 +7,7 @@ import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
@@ -46,10 +44,10 @@ public class FirebaseConfig {
     }
 
     private InputStream openServiceAccount() throws IOException {
-        Resource resource = StringUtils.hasText(serviceAccountPath)
-                ? new FileSystemResource(serviceAccountPath)
-                : new ClassPathResource("firebase-service-account.json");
+        if (!StringUtils.hasText(serviceAccountPath)) {
+            throw new IllegalStateException("firebase.service-account-path must be configured when firebase.enabled is true");
+        }
 
-        return resource.getInputStream();
+        return new FileSystemResource(serviceAccountPath).getInputStream();
     }
 }

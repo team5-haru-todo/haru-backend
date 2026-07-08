@@ -6,6 +6,7 @@ import com.haru.backend.auth.client.KakaoUserInfoResponse;
 import com.haru.backend.auth.dto.AppleLoginRequest;
 import com.haru.backend.auth.dto.KakaoLoginRequest;
 import com.haru.backend.auth.dto.LoginResponse;
+import com.haru.backend.auth.dto.SocialUserCheckResponse;
 import com.haru.backend.global.exception.BusinessException;
 import com.haru.backend.global.exception.ErrorCode;
 import com.haru.backend.global.security.JwtProvider;
@@ -44,6 +45,30 @@ public class AuthService {
 
         String accessToken = jwtProvider.createAccessToken(guest.getId());
         return LoginResponse.of(accessToken, guest, Collections.emptyList());
+    }
+
+    /**
+     * 카카오 액세스 토큰으로 이 사람이 신규 유저인지(약관 동의 화면을 보여줘야 하는지) 확인만 한다.
+     * DB에 아무것도 저장하지 않는다.
+     */
+    public SocialUserCheckResponse checkKakaoUser(String kakaoAccessToken) {
+        KakaoUserInfoResponse kakaoUser = kakaoAuthClient.getUserInfo(kakaoAccessToken);
+        String providerUserId = String.valueOf(kakaoUser.id());
+        boolean isNewUser = socialAccountRepository
+                .findByProviderAndProviderUserId("KAKAO", providerUserId)
+                .isEmpty();
+        return new SocialUserCheckResponse(isNewUser);
+    }
+
+    /**
+     * Apple identityToken으로 이 사람이 신규 유저인지 확인만 한다. DB에 아무것도 저장하지 않는다.
+     */
+    public SocialUserCheckResponse checkAppleUser(String identityToken) {
+        String providerUserId = appleTokenVerifier.verifyAndGetSubject(identityToken);
+        boolean isNewUser = socialAccountRepository
+                .findByProviderAndProviderUserId("APPLE", providerUserId)
+                .isEmpty();
+        return new SocialUserCheckResponse(isNewUser);
     }
 
     public LoginResponse loginWithKakao(KakaoLoginRequest request) {
