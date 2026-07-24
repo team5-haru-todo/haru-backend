@@ -1,6 +1,8 @@
-package com.haru.backend.fcm;
+package com.haru.backend.fcm.controller;
 
 
+import com.haru.backend.fcm.FcmService;
+import com.haru.backend.fcm.FcmTestRequest;
 import com.haru.backend.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,7 +21,7 @@ public class FcmController {
     @PostMapping("/test")
     //응답만 줘도 돼서 반환 타입 void 임
     public ApiResponse<Void> test(@RequestBody FcmTestRequest request){
-        fcmService.sendMessage(request.token(),request.title(),request.body());
+        fcmService.sendMessage("manual-test", request.token(), request.title(), request.body());
         return ApiResponse.ok();
     }
 }
