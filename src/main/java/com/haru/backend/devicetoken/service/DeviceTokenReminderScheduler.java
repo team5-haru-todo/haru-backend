@@ -59,7 +59,7 @@ public class DeviceTokenReminderScheduler {
 
         for (String token : tokens) {
             ReminderMessage message = ReminderMessages.pickRandom(pool);
-            fcmService.sendMessage(token, message.title(), message.body());
+            fcmService.sendMessage(caseName,token, message.title(), message.body());
         }
         log.info("예약 푸시 발송 완료. case={}, count={}", caseName, tokens.size());
     }
