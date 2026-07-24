@@ -1,5 +1,5 @@
 CREATE TABLE notification_sent_log (
-    id BIGINT PRIMARY KEY,
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     token VARCHAR(255) NOT NULL,
     case_name VARCHAR(255) NOT NULL,
     sent_date DATE NOT NULL,
