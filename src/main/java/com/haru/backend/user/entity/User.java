@@ -58,6 +58,17 @@ public class User {
         return user;
     }
 
+    // 게스트도 최초 진입 시 약관 동의를 받도록 추가된 오버로드.
+    // status는 그대로 GUEST — 승격(activate)과는 별개로, 동의 이력만 기록한다.
+    public static User createGuest(String termsVersion, LocalDateTime termsAgreedAt) {
+        User user = new User();
+        user.status = "GUEST";
+        user.nickname = "게스트";
+        user.termsVersion = termsVersion;
+        user.termsAgreedAt = termsAgreedAt;
+        return user;
+    }
+
     public static User createActive(String nickname) {
         User user = new User();
         user.status = "ACTIVE";
