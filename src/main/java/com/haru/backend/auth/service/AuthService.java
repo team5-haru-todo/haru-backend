@@ -4,6 +4,7 @@ import com.haru.backend.auth.client.AppleTokenVerifier;
 import com.haru.backend.auth.client.KakaoAuthClient;
 import com.haru.backend.auth.client.KakaoUserInfoResponse;
 import com.haru.backend.auth.dto.AppleLoginRequest;
+import com.haru.backend.auth.dto.GuestLoginRequest;
 import com.haru.backend.auth.dto.KakaoLoginRequest;
 import com.haru.backend.auth.dto.LoginResponse;
 import com.haru.backend.auth.dto.SocialUserCheckResponse;
@@ -39,8 +40,8 @@ public class AuthService {
     private final AppleTokenVerifier appleTokenVerifier;
     private final JwtProvider jwtProvider;
 
-    public LoginResponse loginAsGuest() {
-        User guest = userRepository.save(User.createGuest());
+    public LoginResponse loginAsGuest(GuestLoginRequest request) {
+        User guest = userRepository.save(User.createGuest(request.termsVersion(), request.agreedAt()));
         createDefaultSettingsAndStats(guest);
 
         String accessToken = jwtProvider.createAccessToken(guest.getId());
