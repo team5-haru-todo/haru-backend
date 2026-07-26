@@ -38,6 +38,18 @@ public class UserSettings {
     @Column(name = "notification_prompt_seen", nullable = false)
     private boolean notificationPromptSeen;
 
+    // 메인 empty 화면(3단계) 튜토리얼을 이 계정이 어느 버전까지 봤는지. 계정 생성 시 0이며,
+    // 프론트의 현재 튜토리얼 버전보다 낮으면 다시 노출한다. 기기별이 아니라 계정별로 저장해
+    // 같은 계정이 다른 기기·재설치 후에도 다시 보지 않게 한다. "생애 최초 완료 여부"와는 무관한
+    // 별개 개념이라 hasEverCompleted류 필드와 섞지 않는다.
+    @Column(name = "main_tutorial_version", nullable = false)
+    private int mainTutorialVersion;
+
+    // 메인 completed 화면(1단계, "한개 더하기" 안내) 튜토리얼 버전. mainTutorialVersion과
+    // 서로 독립적으로 시청 여부를 추적한다(한쪽을 이미 봤다고 다른 쪽까지 넘어가지 않음).
+    @Column(name = "main_completed_tutorial_version", nullable = false)
+    private int mainCompletedTutorialVersion;
+
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
@@ -48,6 +60,8 @@ public class UserSettings {
         settings.pushEnabled = true;
         settings.timezone = "Asia/Seoul";
         settings.notificationPromptSeen = false;
+        settings.mainTutorialVersion = 0;
+        settings.mainCompletedTutorialVersion = 0;
         return settings;
     }
 
@@ -61,5 +75,13 @@ public class UserSettings {
 
     public void updateNotificationPromptSeen(boolean notificationPromptSeen) {
         this.notificationPromptSeen = notificationPromptSeen;
+    }
+
+    public void updateMainTutorialVersion(int mainTutorialVersion) {
+        this.mainTutorialVersion = mainTutorialVersion;
+    }
+
+    public void updateMainCompletedTutorialVersion(int mainCompletedTutorialVersion) {
+        this.mainCompletedTutorialVersion = mainCompletedTutorialVersion;
     }
 }

@@ -62,6 +62,20 @@ public class UserService {
         if (request.notificationPromptSeen() != null) {
             settings.updateNotificationPromptSeen(request.notificationPromptSeen());
         }
+        if (request.mainTutorialVersion() != null) {
+            // 계정별 "이미 봄" 상태가 실수로(오래된 클라이언트, 요청 순서 뒤바뀜 등) 되돌아가지
+            // 않도록, 저장된 값보다 낮은 버전 요청은 거부한다. 동일 값 재요청(멱등)은 허용한다.
+            if (request.mainTutorialVersion() < settings.getMainTutorialVersion()) {
+                throw new BusinessException(ErrorCode.TUTORIAL_VERSION_DOWNGRADE_NOT_ALLOWED);
+            }
+            settings.updateMainTutorialVersion(request.mainTutorialVersion());
+        }
+        if (request.mainCompletedTutorialVersion() != null) {
+            if (request.mainCompletedTutorialVersion() < settings.getMainCompletedTutorialVersion()) {
+                throw new BusinessException(ErrorCode.TUTORIAL_VERSION_DOWNGRADE_NOT_ALLOWED);
+            }
+            settings.updateMainCompletedTutorialVersion(request.mainCompletedTutorialVersion());
+        }
 
         return UserSettingsResponse.of(settings);
     }
