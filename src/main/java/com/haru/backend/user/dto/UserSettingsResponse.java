@@ -7,7 +7,8 @@ public record UserSettingsResponse(
         String timezone,
         boolean notificationPromptSeen,
         int mainTutorialVersion,
-        int mainCompletedTutorialVersion
+        int mainCompletedTutorialVersion,
+        boolean memoTutorialSeen
 ) {
     public static UserSettingsResponse of(UserSettings settings) {
         return new UserSettingsResponse(
@@ -15,7 +16,8 @@ public record UserSettingsResponse(
                 settings.getTimezone(),
                 settings.isNotificationPromptSeen(),
                 settings.getMainTutorialVersion(),
-                settings.getMainCompletedTutorialVersion()
+                settings.getMainCompletedTutorialVersion(),
+                settings.isMemoTutorialSeen()
         );
     }
 }

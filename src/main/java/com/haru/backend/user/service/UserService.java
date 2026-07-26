@@ -9,14 +9,17 @@ import com.haru.backend.user.dto.WithdrawRequest;
 import com.haru.backend.user.entity.SocialAccount;
 import com.haru.backend.user.entity.User;
 import com.haru.backend.user.entity.UserSettings;
+import com.haru.backend.user.entity.WithdrawalLog;
 import com.haru.backend.user.repository.SocialAccountRepository;
 import com.haru.backend.user.repository.UserRepository;
 import com.haru.backend.user.repository.UserSettingsRepository;
+import com.haru.backend.user.repository.WithdrawalLogRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,6 +32,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final SocialAccountRepository socialAccountRepository;
     private final UserSettingsRepository userSettingsRepository;
+    private final WithdrawalLogRepository withdrawalLogRepository;
 
     public UserResponse getMe(UUID userId) {
         User user = userRepository.findById(userId)
@@ -76,6 +80,9 @@ public class UserService {
             }
             settings.updateMainCompletedTutorialVersion(request.mainCompletedTutorialVersion());
         }
+        if (request.memoTutorialSeen() != null) {
+            settings.updateMemoTutorialSeen(request.memoTutorialSeen());
+        }
 
         return UserSettingsResponse.of(settings);
     }
@@ -87,6 +94,19 @@ public class UserService {
 
         log.info("회원 탈퇴 - userId: {}, reasons: {}, etcReason: {}",
                 userId, request.reasons(), request.etcReason());
+
+        // 탈퇴 사유를 기록한다. (탈퇴 원인 분석용)
+        WithdrawalLog withdrawalLog = WithdrawalLog.builder()
+                .userId(userId)
+                .etcReason(request.etcReason())
+                .withdrawnAt(LocalDateTime.now())
+                .build();
+
+        List<String> reasons = request.reasons();
+        if (reasons != null) {
+            reasons.forEach(withdrawalLog::addReason);
+        }
+        withdrawalLogRepository.save(withdrawalLog);
 
         // 탈퇴 시 소셜 계정 연동 정보도 함께 정리한다.
         // (재가입 시 같은 소셜 계정으로 다시 연동할 수 있도록 하기 위함 —

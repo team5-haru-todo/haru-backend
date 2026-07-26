@@ -50,3 +50,5 @@ out/
 firebase-service-account.json
 
 
+.refact/
+FETCH_HEAD

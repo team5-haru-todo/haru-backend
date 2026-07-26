@@ -50,6 +50,11 @@ public class UserSettings {
     @Column(name = "main_completed_tutorial_version", nullable = false)
     private int mainCompletedTutorialVersion;
 
+    // 메모장 첫 진입 튜토리얼을 이 계정에 더 이상 띄우지 않아도 되는지 여부.
+    // 계정 생성 시 기본 false이며, 튜토리얼을 끝까지 보거나 건너뛰면 true로 고정된다.
+    @Column(name = "memo_tutorial_seen", nullable = false)
+    private boolean memoTutorialSeen;
+
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
@@ -62,6 +67,7 @@ public class UserSettings {
         settings.notificationPromptSeen = false;
         settings.mainTutorialVersion = 0;
         settings.mainCompletedTutorialVersion = 0;
+        settings.memoTutorialSeen = false;
         return settings;
     }
 
@@ -83,5 +89,9 @@ public class UserSettings {
 
     public void updateMainCompletedTutorialVersion(int mainCompletedTutorialVersion) {
         this.mainCompletedTutorialVersion = mainCompletedTutorialVersion;
+    }
+
+    public void updateMemoTutorialSeen(boolean memoTutorialSeen) {
+        this.memoTutorialSeen = memoTutorialSeen;
     }
 }

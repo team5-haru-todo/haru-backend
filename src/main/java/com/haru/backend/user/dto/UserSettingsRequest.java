@@ -14,5 +14,7 @@ public record UserSettingsRequest(
 
         @Min(value = 0, message = "mainCompletedTutorialVersion 은 0 이상이어야 합니다.")
         @Max(value = 1000, message = "mainCompletedTutorialVersion 이 너무 큽니다.")
-        Integer mainCompletedTutorialVersion
+        Integer mainCompletedTutorialVersion,
+
+        Boolean memoTutorialSeen
 ) {}

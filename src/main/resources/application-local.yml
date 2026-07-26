@@ -19,6 +19,9 @@ springdoc:
 
 apple:
   bundle-id: ${APPLE_BUNDLE_ID:com.team5haru.harufrontend}
+kakao:
+  webhook:
+    token: ${KAKAO_WEBHOOK_TOKEN:haru-local-dev-webhook-token}
 app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}

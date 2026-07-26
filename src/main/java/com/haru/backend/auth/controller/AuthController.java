@@ -1,6 +1,7 @@
 package com.haru.backend.auth.controller;
 
 import com.haru.backend.auth.dto.AppleLoginRequest;
+import com.haru.backend.auth.dto.GuestLoginRequest;
 import com.haru.backend.auth.dto.KakaoLoginRequest;
 import com.haru.backend.auth.dto.LoginResponse;
 import com.haru.backend.auth.dto.SocialUserCheckResponse;
@@ -32,8 +33,8 @@ public class AuthController {
     private final TokenInvalidationService tokenInvalidationService;
 
     @PostMapping("/guest")
-    public ApiResponse<LoginResponse> loginAsGuest() {
-        LoginResponse response = authService.loginAsGuest();
+    public ApiResponse<LoginResponse> loginAsGuest(@RequestBody GuestLoginRequest request) {
+        LoginResponse response = authService.loginAsGuest(request);
         return ApiResponse.ok("게스트로 시작합니다.", response);
     }
 

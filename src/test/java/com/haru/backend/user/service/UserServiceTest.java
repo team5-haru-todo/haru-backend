@@ -62,7 +62,7 @@ class UserServiceTest {
         given(userSettingsRepository.findById(userId)).willReturn(Optional.of(settings));
 
         UserSettingsResponse response = userService.updateMySettings(
-                userId, new UserSettingsRequest(null, null, null, 1, null));
+                userId, new UserSettingsRequest(null, null, null, 1, null, null));
 
         assertThat(response.mainTutorialVersion()).isEqualTo(1);
         assertThat(response.mainCompletedTutorialVersion()).isZero();
@@ -75,7 +75,7 @@ class UserServiceTest {
         given(userSettingsRepository.findById(userId)).willReturn(Optional.of(settings));
 
         UserSettingsResponse response = userService.updateMySettings(
-                userId, new UserSettingsRequest(null, null, null, null, 1));
+                userId, new UserSettingsRequest(null, null, null, null, 1, null));
 
         assertThat(response.mainTutorialVersion()).isZero();
         assertThat(response.mainCompletedTutorialVersion()).isEqualTo(1);
@@ -88,7 +88,7 @@ class UserServiceTest {
         given(userSettingsRepository.findById(userId)).willReturn(Optional.of(settings));
 
         UserSettingsResponse response = userService.updateMySettings(
-                userId, new UserSettingsRequest(null, null, null, 1, 1));
+                userId, new UserSettingsRequest(null, null, null, 1, 1, null));
 
         assertThat(response.mainTutorialVersion()).isEqualTo(1);
         assertThat(response.mainCompletedTutorialVersion()).isEqualTo(1);
@@ -104,7 +104,7 @@ class UserServiceTest {
         given(userSettingsRepository.findById(userId)).willReturn(Optional.of(settings));
 
         UserSettingsResponse response = userService.updateMySettings(
-                userId, new UserSettingsRequest(null, null, null, 1, null));
+                userId, new UserSettingsRequest(null, null, null, 1, null, null));
 
         assertThat(response.pushEnabled()).isFalse();
         assertThat(response.timezone()).isEqualTo("Asia/Tokyo");
@@ -117,9 +117,9 @@ class UserServiceTest {
         UserSettings settings = defaultSettings();
         given(userSettingsRepository.findById(userId)).willReturn(Optional.of(settings));
 
-        userService.updateMySettings(userId, new UserSettingsRequest(null, null, null, 1, null));
+        userService.updateMySettings(userId, new UserSettingsRequest(null, null, null, 1, null, null));
         UserSettingsResponse second = userService.updateMySettings(
-                userId, new UserSettingsRequest(null, null, null, 1, null));
+                userId, new UserSettingsRequest(null, null, null, 1, null, null));
 
         assertThat(second.mainTutorialVersion()).isEqualTo(1);
     }
@@ -132,7 +132,7 @@ class UserServiceTest {
         given(userSettingsRepository.findById(userId)).willReturn(Optional.of(settings));
 
         assertThatThrownBy(() -> userService.updateMySettings(
-                userId, new UserSettingsRequest(null, null, null, 1, null)))
+                userId, new UserSettingsRequest(null, null, null, 1, null, null)))
                 .isInstanceOf(BusinessException.class)
                 .extracting(e -> ((BusinessException) e).getErrorCode())
                 .isEqualTo(ErrorCode.TUTORIAL_VERSION_DOWNGRADE_NOT_ALLOWED);
@@ -148,7 +148,7 @@ class UserServiceTest {
         given(userSettingsRepository.findById(userId)).willReturn(Optional.of(settings));
 
         assertThatThrownBy(() -> userService.updateMySettings(
-                userId, new UserSettingsRequest(null, null, null, null, 1)))
+                userId, new UserSettingsRequest(null, null, null, null, 1, null)))
                 .isInstanceOf(BusinessException.class)
                 .extracting(e -> ((BusinessException) e).getErrorCode())
                 .isEqualTo(ErrorCode.TUTORIAL_VERSION_DOWNGRADE_NOT_ALLOWED);
@@ -164,7 +164,7 @@ class UserServiceTest {
         given(userSettingsRepository.findById(userA)).willReturn(Optional.of(settingsA));
         given(userSettingsRepository.findById(userB)).willReturn(Optional.of(settingsB));
 
-        userService.updateMySettings(userA, new UserSettingsRequest(null, null, null, 1, null));
+        userService.updateMySettings(userA, new UserSettingsRequest(null, null, null, 1, null, null));
         UserSettingsResponse responseB = userService.getMySettings(userB);
 
         assertThat(settingsA.getMainTutorialVersion()).isEqualTo(1);
