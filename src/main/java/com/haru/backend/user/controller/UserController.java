@@ -10,6 +10,7 @@ import com.haru.backend.user.dto.WithdrawRequest;
 import com.haru.backend.user.service.UserService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
@@ -43,7 +44,7 @@ public class UserController {
     @PatchMapping("/me/settings")
     public ApiResponse<UserSettingsResponse> updateMySettings(
             @LoginUser UUID userId,
-            @RequestBody UserSettingsRequest request
+            @Valid @RequestBody UserSettingsRequest request
     ) {
         UserSettingsResponse response = userService.updateMySettings(userId, request);
         return ApiResponse.ok("설정이 수정되었습니다.", response);
