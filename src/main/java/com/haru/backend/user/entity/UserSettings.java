@@ -38,6 +38,11 @@ public class UserSettings {
     @Column(name = "notification_prompt_seen", nullable = false)
     private boolean notificationPromptSeen;
 
+    // 메모장 첫 진입 튜토리얼을 이 계정에 더 이상 띄우지 않아도 되는지 여부.
+    // 계정 생성 시 기본 false이며, 튜토리얼을 끝까지 보거나 건너뛰면 true로 고정된다.
+    @Column(name = "memo_tutorial_seen", nullable = false)
+    private boolean memoTutorialSeen;
+
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
@@ -48,6 +53,7 @@ public class UserSettings {
         settings.pushEnabled = true;
         settings.timezone = "Asia/Seoul";
         settings.notificationPromptSeen = false;
+        settings.memoTutorialSeen = false;
         return settings;
     }
 
@@ -61,5 +67,9 @@ public class UserSettings {
 
     public void updateNotificationPromptSeen(boolean notificationPromptSeen) {
         this.notificationPromptSeen = notificationPromptSeen;
+    }
+
+    public void updateMemoTutorialSeen(boolean memoTutorialSeen) {
+        this.memoTutorialSeen = memoTutorialSeen;
     }
 }

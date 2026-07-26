@@ -1,0 +1,2 @@
+ALTER TABLE user_settings
+ADD COLUMN memo_tutorial_seen BOOLEAN NOT NULL DEFAULT FALSE;
