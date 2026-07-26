@@ -66,6 +66,9 @@ public class UserService {
         if (request.notificationPromptSeen() != null) {
             settings.updateNotificationPromptSeen(request.notificationPromptSeen());
         }
+        if (request.memoTutorialSeen() != null) {
+            settings.updateMemoTutorialSeen(request.memoTutorialSeen());
+        }
 
         return UserSettingsResponse.of(settings);
     }
