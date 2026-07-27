@@ -83,6 +83,9 @@ public class UserService {
         if (request.memoTutorialSeen() != null) {
             settings.updateMemoTutorialSeen(request.memoTutorialSeen());
         }
+        if (request.memoSlidePreviewSeen() != null) {
+            settings.updateMemoSlidePreviewSeen(request.memoSlidePreviewSeen());
+        }
 
         return UserSettingsResponse.of(settings);
     }

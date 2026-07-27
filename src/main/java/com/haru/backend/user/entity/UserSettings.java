@@ -55,6 +55,12 @@ public class UserSettings {
     @Column(name = "memo_tutorial_seen", nullable = false)
     private boolean memoTutorialSeen;
 
+    // 메모장 진입 시 첫 카드 스와이프 프리뷰를 이 계정에 이미 보여줬는지 여부. 계정당 1회만 노출하며,
+    // 계정 생성 시 기본 false다. 누구에게 띄울지(memoTutorialSeen == true 이면서 메모가 1개 이상)는
+    // 전적으로 프론트가 판단하고, 서버는 이 값을 저장하고 돌려주기만 한다.
+    @Column(name = "memo_slide_preview_seen", nullable = false)
+    private boolean memoSlidePreviewSeen;
+
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
@@ -68,6 +74,7 @@ public class UserSettings {
         settings.mainTutorialVersion = 0;
         settings.mainCompletedTutorialVersion = 0;
         settings.memoTutorialSeen = false;
+        settings.memoSlidePreviewSeen = false;
         return settings;
     }
 
@@ -93,5 +100,9 @@ public class UserSettings {
 
     public void updateMemoTutorialSeen(boolean memoTutorialSeen) {
         this.memoTutorialSeen = memoTutorialSeen;
+    }
+
+    public void updateMemoSlidePreviewSeen(boolean memoSlidePreviewSeen) {
+        this.memoSlidePreviewSeen = memoSlidePreviewSeen;
     }
 }
