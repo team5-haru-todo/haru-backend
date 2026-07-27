@@ -16,5 +16,6 @@ public record UserSettingsRequest(
         @Max(value = 1000, message = "mainCompletedTutorialVersion 이 너무 큽니다.")
         Integer mainCompletedTutorialVersion,
 
-        Boolean memoTutorialSeen
+        Boolean memoTutorialSeen,
+        Boolean memoSlidePreviewSeen
 ) {}

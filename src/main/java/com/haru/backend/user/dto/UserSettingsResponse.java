@@ -8,7 +8,8 @@ public record UserSettingsResponse(
         boolean notificationPromptSeen,
         int mainTutorialVersion,
         int mainCompletedTutorialVersion,
-        boolean memoTutorialSeen
+        boolean memoTutorialSeen,
+        boolean memoSlidePreviewSeen
 ) {
     public static UserSettingsResponse of(UserSettings settings) {
         return new UserSettingsResponse(
@@ -17,7 +18,8 @@ public record UserSettingsResponse(
                 settings.isNotificationPromptSeen(),
                 settings.getMainTutorialVersion(),
                 settings.getMainCompletedTutorialVersion(),
-                settings.isMemoTutorialSeen()
+                settings.isMemoTutorialSeen(),
+                settings.isMemoSlidePreviewSeen()
         );
     }
 }

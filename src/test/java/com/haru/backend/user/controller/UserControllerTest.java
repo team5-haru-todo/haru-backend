@@ -71,7 +71,7 @@ class UserControllerTest {
     @DisplayName("설정 조회 응답에 두 튜토리얼 버전이 포함된다")
     void getMySettings() throws Exception {
         given(userService.getMySettings(userId)).willReturn(
-                new UserSettingsResponse(true, "Asia/Seoul", true, 0, 0, false));
+                new UserSettingsResponse(true, "Asia/Seoul", true, 0, 0, false, false));
 
         mockMvc.perform(get("/api/users/me/settings"))
                 .andExpect(status().isOk())
@@ -84,12 +84,12 @@ class UserControllerTest {
     @DisplayName("mainTutorialVersion PATCH → 200 OK")
     void updateMainTutorialVersion() throws Exception {
         given(userService.updateMySettings(eq(userId), any(UserSettingsRequest.class)))
-                .willReturn(new UserSettingsResponse(true, "Asia/Seoul", true, 1, 0, false));
+                .willReturn(new UserSettingsResponse(true, "Asia/Seoul", true, 1, 0, false, false));
 
         mockMvc.perform(patch("/api/users/me/settings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
-                                new UserSettingsRequest(null, null, null, 1, null, null))))
+                                new UserSettingsRequest(null, null, null, 1, null, null, null))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.mainTutorialVersion").value(1));
@@ -101,7 +101,7 @@ class UserControllerTest {
         mockMvc.perform(patch("/api/users/me/settings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
-                                new UserSettingsRequest(null, null, null, -1, null, null))))
+                                new UserSettingsRequest(null, null, null, -1, null, null, null))))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value("COMMON_001"))
@@ -117,7 +117,7 @@ class UserControllerTest {
         mockMvc.perform(patch("/api/users/me/settings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
-                                new UserSettingsRequest(null, null, null, 0, null, null))))
+                                new UserSettingsRequest(null, null, null, 0, null, null, null))))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value("USER_003"));
@@ -127,12 +127,12 @@ class UserControllerTest {
     @DisplayName("두 튜토리얼 버전을 한 요청으로 함께 PATCH 할 수 있다")
     void updateBothTutorialVersions() throws Exception {
         given(userService.updateMySettings(eq(userId), any(UserSettingsRequest.class)))
-                .willReturn(new UserSettingsResponse(true, "Asia/Seoul", true, 1, 1, false));
+                .willReturn(new UserSettingsResponse(true, "Asia/Seoul", true, 1, 1, false, false));
 
         mockMvc.perform(patch("/api/users/me/settings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
-                                new UserSettingsRequest(null, null, null, 1, 1, null))))
+                                new UserSettingsRequest(null, null, null, 1, 1, null, null))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.mainTutorialVersion").value(1))
                 .andExpect(jsonPath("$.data.mainCompletedTutorialVersion").value(1));
