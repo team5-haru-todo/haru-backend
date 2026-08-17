@@ -51,6 +51,10 @@ public class User {
     @Column(name = "has_seen_onboarding", nullable = false)
     private boolean hasSeenOnboarding = false;
 
+    // 미사용 게스트 판단 기준(40일)에 쓰인다. 인증된 요청이 있을 때 하루 1회 갱신된다.
+    @Column(name = "last_active_at")
+    private LocalDateTime lastActiveAt;
+
     public static User createGuest() {
         User user = new User();
         user.status = "GUEST";
@@ -103,5 +107,14 @@ public class User {
 
     public void completeOnboarding() {
         this.hasSeenOnboarding = true;
+    }
+
+    // 오늘 안에 이미 갱신했으면 다시 안 씀 (매 요청마다 불필요한 DB 쓰기 방지)
+    public boolean needsLastActiveAtUpdate() {
+        return lastActiveAt == null || !lastActiveAt.toLocalDate().isEqual(LocalDateTime.now().toLocalDate());
+    }
+
+    public void updateLastActiveAt() {
+        this.lastActiveAt = LocalDateTime.now();
     }
 }
