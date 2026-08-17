@@ -1,5 +1,6 @@
 package com.haru.backend.user.service;
 
+import com.haru.backend.auth.token.RefreshTokenService;
 import com.haru.backend.devicetoken.repository.DeviceTokenRepository;
 import com.haru.backend.global.exception.BusinessException;
 import com.haru.backend.global.exception.ErrorCode;
@@ -39,6 +40,7 @@ public class UserService {
     private final TaskRepository taskRepository;
     private final DailyRecordRepository dailyRecordRepository;
     private final DeviceTokenRepository deviceTokenRepository;
+    private final RefreshTokenService refreshTokenService;
 
     public UserResponse getMe(UUID userId) {
         User user = userRepository.findById(userId)
@@ -130,6 +132,10 @@ public class UserService {
         dailyRecordRepository.deleteAllByUserId(userId);   // 1. 완료기록 (task_completions는 CASCADE로 자동 삭제)
         taskRepository.deleteAllByUserId(userId);          // 2. 할일·메모
         deviceTokenRepository.deleteAllByUserId(userId);   // 3. 디바이스 토큰
+
+        // 탈퇴 계정의 재인증 수단(Refresh Token)도 즉시 폐기한다.
+        // (Access Token은 컨트롤러에서 TokenInvalidationService로 이미 무효화됨)
+        refreshTokenService.revoke(userId);
 
         user.withdraw();
     }
