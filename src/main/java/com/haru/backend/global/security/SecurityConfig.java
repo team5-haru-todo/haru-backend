@@ -42,6 +42,7 @@ public class SecurityConfig {
                                 "/api/auth/kakao/check",
                                 "/api/auth/apple",
                                 "/api/auth/apple/check",
+                                "/api/auth/reissue",
                                 "/api/webhooks/**",
                                 "/actuator/health",
                                 "/swagger-ui/**",

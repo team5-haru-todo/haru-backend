@@ -7,6 +7,7 @@ import java.util.UUID;
 
 public record LoginResponse(
         String accessToken,
+        String refreshToken,
         UserInfo user
 ) {
     public record UserInfo(
@@ -17,9 +18,10 @@ public record LoginResponse(
             boolean hasSeenOnboarding
     ) {}
 
-    public static LoginResponse of(String accessToken, User user, List<String> connectedProviders) {
+    public static LoginResponse of(String accessToken, String refreshToken, User user, List<String> connectedProviders) {
         return new LoginResponse(
                 accessToken,
+                refreshToken,
                 new UserInfo(
                         user.getId(),
                         user.getNickname(),
