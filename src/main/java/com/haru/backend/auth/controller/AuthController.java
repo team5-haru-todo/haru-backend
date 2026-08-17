@@ -4,6 +4,8 @@ import com.haru.backend.auth.dto.AppleLoginRequest;
 import com.haru.backend.auth.dto.GuestLoginRequest;
 import com.haru.backend.auth.dto.KakaoLoginRequest;
 import com.haru.backend.auth.dto.LoginResponse;
+import com.haru.backend.auth.dto.ReissueRequest;
+import com.haru.backend.auth.dto.ReissueResponse;
 import com.haru.backend.auth.dto.SocialUserCheckResponse;
 import com.haru.backend.auth.service.AuthService;
 import com.haru.backend.global.response.ApiResponse;
@@ -49,7 +51,7 @@ public class AuthController {
     }
 
     /**
-     * Apple SDK 로그인 직후, 실제 가입 처리를 하기 전에 신규 유저인지 확인한다.
+     * Apple identityToken으로 이 사람이 신규 유저인지 확인만 한다.
      */
     @PostMapping("/apple/check")
     public ApiResponse<SocialUserCheckResponse> checkAppleUser(@RequestParam("identityToken") String identityToken) {
@@ -67,6 +69,17 @@ public class AuthController {
     public ApiResponse<LoginResponse> loginWithApple(@RequestBody AppleLoginRequest request) {
         LoginResponse response = authService.loginWithApple(request);
         return ApiResponse.ok("로그인에 성공했습니다.", response);
+    }
+
+    /**
+     * Access Token 만료 시, Refresh Token으로 새 Access Token을 재발급한다.
+     * 이 시점엔 Access Token이 이미 만료된 상태라 Bearer 인증을 요구하지 않는다.
+     * Refresh Token 자체도 로테이션(재발급)된다.
+     */
+    @PostMapping("/reissue")
+    public ApiResponse<ReissueResponse> reissue(@RequestBody ReissueRequest request) {
+        ReissueResponse response = authService.reissue(request.refreshToken());
+        return ApiResponse.ok("토큰이 재발급되었습니다.", response);
     }
 
     @SecurityRequirement(name = "bearerAuth")
