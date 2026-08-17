@@ -7,7 +7,9 @@ import com.haru.backend.auth.dto.AppleLoginRequest;
 import com.haru.backend.auth.dto.GuestLoginRequest;
 import com.haru.backend.auth.dto.KakaoLoginRequest;
 import com.haru.backend.auth.dto.LoginResponse;
+import com.haru.backend.auth.dto.ReissueResponse;
 import com.haru.backend.auth.dto.SocialUserCheckResponse;
+import com.haru.backend.auth.token.RefreshTokenService;
 import com.haru.backend.global.exception.BusinessException;
 import com.haru.backend.global.exception.ErrorCode;
 import com.haru.backend.global.security.JwtProvider;
@@ -39,13 +41,15 @@ public class AuthService {
     private final KakaoAuthClient kakaoAuthClient;
     private final AppleTokenVerifier appleTokenVerifier;
     private final JwtProvider jwtProvider;
+    private final RefreshTokenService refreshTokenService;
 
     public LoginResponse loginAsGuest(GuestLoginRequest request) {
         User guest = userRepository.save(User.createGuest(request.termsVersion(), request.agreedAt()));
         createDefaultSettingsAndStats(guest);
 
         String accessToken = jwtProvider.createAccessToken(guest.getId());
-        return LoginResponse.of(accessToken, guest, Collections.emptyList());
+        String refreshToken = refreshTokenService.issue(guest.getId());
+        return LoginResponse.of(accessToken, refreshToken, guest, Collections.emptyList());
     }
 
     /**
@@ -92,7 +96,8 @@ public class AuthService {
                 .toList();
 
         String accessToken = jwtProvider.createAccessToken(user.getId());
-        return LoginResponse.of(accessToken, user, connectedProviders);
+        String refreshToken = refreshTokenService.issue(user.getId());
+        return LoginResponse.of(accessToken, refreshToken, user, connectedProviders);
     }
 
     public LoginResponse loginWithApple(AppleLoginRequest request) {
@@ -116,7 +121,8 @@ public class AuthService {
                 .toList();
 
         String accessToken = jwtProvider.createAccessToken(user.getId());
-        return LoginResponse.of(accessToken, user, connectedProviders);
+        String refreshToken = refreshTokenService.issue(user.getId());
+        return LoginResponse.of(accessToken, refreshToken, user, connectedProviders);
     }
 
     /**
@@ -146,7 +152,8 @@ public class AuthService {
                 .toList();
 
         String accessToken = jwtProvider.createAccessToken(user.getId());
-        return LoginResponse.of(accessToken, user, connectedProviders);
+        String refreshToken = refreshTokenService.issue(user.getId());
+        return LoginResponse.of(accessToken, refreshToken, user, connectedProviders);
     }
 
     /**
@@ -175,7 +182,17 @@ public class AuthService {
                 .toList();
 
         String accessToken = jwtProvider.createAccessToken(user.getId());
-        return LoginResponse.of(accessToken, user, connectedProviders);
+        String refreshToken = refreshTokenService.issue(user.getId());
+        return LoginResponse.of(accessToken, refreshToken, user, connectedProviders);
+    }
+
+    /**
+     * Refresh Token으로 새 Access Token을 재발급한다. (Refresh Token 자체도 로테이션됨)
+     */
+    public ReissueResponse reissue(String refreshToken) {
+        RefreshTokenService.ReissueResult result = refreshTokenService.reissue(refreshToken);
+        String newAccessToken = jwtProvider.createAccessToken(result.userId());
+        return new ReissueResponse(newAccessToken, result.newRawToken());
     }
 
     private void createDefaultSettingsAndStats(User user) {
