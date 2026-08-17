@@ -1,7 +1,10 @@
 package com.haru.backend.user.service;
 
+import com.haru.backend.devicetoken.repository.DeviceTokenRepository;
 import com.haru.backend.global.exception.BusinessException;
 import com.haru.backend.global.exception.ErrorCode;
+import com.haru.backend.record.repository.DailyRecordRepository;
+import com.haru.backend.task.repository.TaskRepository;
 import com.haru.backend.user.dto.UserResponse;
 import com.haru.backend.user.dto.UserSettingsRequest;
 import com.haru.backend.user.dto.UserSettingsResponse;
@@ -33,6 +36,9 @@ public class UserService {
     private final SocialAccountRepository socialAccountRepository;
     private final UserSettingsRepository userSettingsRepository;
     private final WithdrawalLogRepository withdrawalLogRepository;
+    private final TaskRepository taskRepository;
+    private final DailyRecordRepository dailyRecordRepository;
+    private final DeviceTokenRepository deviceTokenRepository;
 
     public UserResponse getMe(UUID userId) {
         User user = userRepository.findById(userId)
@@ -116,6 +122,14 @@ public class UserService {
         //  탈퇴한 계정이 소셜 고유값을 계속 붙잡고 있으면 새 계정에서 재연동이 막히는 문제가 있었음)
         List<SocialAccount> socialAccounts = socialAccountRepository.findAllByUser(user);
         socialAccountRepository.deleteAll(socialAccounts);
+
+        // 탈퇴 시 유저 데이터를 완전삭제한다. (법적 보관 대상인 withdrawal_log는 별도 보관)
+        // 순서 중요: task_completions.task_id는 ON DELETE RESTRICT라서,
+        // tasks보다 daily_records를 먼저 지워야 한다.
+        // (daily_records를 지우면 task_completions는 ON DELETE CASCADE로 함께 삭제됨)
+        dailyRecordRepository.deleteAllByUserId(userId);   // 1. 완료기록 (task_completions는 CASCADE로 자동 삭제)
+        taskRepository.deleteAllByUserId(userId);          // 2. 할일·메모
+        deviceTokenRepository.deleteAllByUserId(userId);   // 3. 디바이스 토큰
 
         user.withdraw();
     }
