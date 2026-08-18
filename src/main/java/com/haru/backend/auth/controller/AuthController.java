@@ -93,9 +93,12 @@ public class AuthController {
     @PostMapping("/kakao/link")
     public ApiResponse<LoginResponse> linkKakao(
             @LoginUser UUID userId,
-            @RequestBody KakaoLoginRequest request
+            @RequestBody KakaoLoginRequest request,
+            HttpServletRequest httpRequest
     ) {
         LoginResponse response = authService.linkKakao(userId, request);
+        // 연동 완료 후 새 토큰이 발급됐으니, 연동 전에 쓰던 예전 Access Token은 무효화한다.
+        resolveToken(httpRequest).ifPresent(tokenInvalidationService::invalidate);
         return ApiResponse.ok("카카오 계정이 연동되었습니다.", response);
     }
 
@@ -103,9 +106,12 @@ public class AuthController {
     @PostMapping("/apple/link")
     public ApiResponse<LoginResponse> linkApple(
             @LoginUser UUID userId,
-            @RequestBody AppleLoginRequest request
+            @RequestBody AppleLoginRequest request,
+            HttpServletRequest httpRequest
     ) {
         LoginResponse response = authService.linkApple(userId, request);
+        // 연동 완료 후 새 토큰이 발급됐으니, 연동 전에 쓰던 예전 Access Token은 무효화한다.
+        resolveToken(httpRequest).ifPresent(tokenInvalidationService::invalidate);
         return ApiResponse.ok("Apple 계정이 연동되었습니다.", response);
     }
 
