@@ -19,7 +19,7 @@ import java.util.UUID;
 public class WidgetTokenService {
     private static final long VALIDITY_DAYS = 40;
     private final WidgetTokenRepository tokenRepository;
-    private final SecureRandom secureRandom;
+    private final SecureRandom secureRandom = new SecureRandom();
     private final WidgetTokenReuseHandler reuseHandler;
 
 // DB 건드리는 작업 (최초 발급)
