@@ -18,6 +18,11 @@ public enum ErrorCode {
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_006", "유효하지 않은 재인증 정보입니다."),
     REFRESH_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "AUTH_007", "재인증 정보가 만료되었습니다. 다시 로그인해주세요."),
 
+    //widget
+    WIDGET_TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "WIDGET_001", "위젯 토큰을 찾을 수 없습니다."),
+    WIDGET_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "WIDGET_002", "위젯 토큰이 만료되었습니다."),
+    WIDGET_TOKEN_REUSED(HttpStatus.CONFLICT, "WIDGET_003", "재사용된 위젯 토큰입니다."),
+
     // User
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_001", "사용자를 찾을 수 없습니다."),
     USER_STATS_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "USER_002", "사용자 통계 정보가 초기화되지 않았습니다."),

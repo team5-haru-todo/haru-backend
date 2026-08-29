@@ -43,6 +43,7 @@ public class SecurityConfig {
                                 "/api/auth/apple",
                                 "/api/auth/apple/check",
                                 "/api/auth/reissue",
+                                "/api/widget/token/rotate",
                                 "/api/webhooks/**",
                                 "/actuator/health",
                                 "/swagger-ui/**",

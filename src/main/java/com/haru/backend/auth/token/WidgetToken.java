@@ -45,12 +45,16 @@ public class WidgetToken {
         this.createdAt = Instant.now();
         this.status = WidgetTokenStatus.ACTIVE;
     }
+    public boolean isExpired() {
+        return Instant.now().isAfter(this.expiresAt);
+    }
     public void markRotated() {
         this.status = WidgetTokenStatus.ROTATED;
     }
     public void revoke() {
         this.status = WidgetTokenStatus.REVOKED;
     }
+
     public void assignFamilyId(Long familyId) {
         this.familyId = familyId;
     }
